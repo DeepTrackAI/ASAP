@@ -196,9 +196,15 @@ class ConditionalVariationalAutoEncoder(Application):
     ) -> None:
         # TODO: Add docstring also for init.
 
-        self.encoder = encoder or self._get_default_encoder(
-            input_size, condition_dim, channels
-        )
+        if encoder is not None:
+            self.encoder = encoder
+        else:
+            self.encoder = self._get_default_encoder(
+                input_size,
+                condition_dim,
+                channels,
+            )
+
         self.fc_mu = nn.Linear(
             channels[-1],
             latent_dim,
@@ -215,12 +221,15 @@ class ConditionalVariationalAutoEncoder(Application):
         if decoder is not None:
             self.decoder = decoder
         else:
-            self._get_default_decoder(input_size, channels[::-1])
+            self.decoder = self._get_default_decoder(
+                input_size,
+                channels[::-1],
+            )
 
         if reconstruction_loss is not None:
             self.reconstruction_loss = reconstruction_loss
         else:
-            nn.BCELoss(reduction="sum")
+            self.reconstruction_loss = nn.BCELoss(reduction="sum")
 
         self.latent_dim = latent_dim
         self.beta = beta
