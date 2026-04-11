@@ -7,11 +7,12 @@ from deeplay.external import Optimizer, Adam
 import torch
 import torch.nn as nn
 
+
 class ConditionalVariationalAutoEncoder(Application):
     """Conditional Variational Autoencoder (CVAE) Application.
 
     This application implements a conditional variational autoencoder (CVAE),
-    which extends the standard VAE by conditioning both the encoder and 
+    which extends the standard VAE by conditioning both the encoder and
     decoder on additional information (condition vector c).
 
     The encoder maps the input and condition into a latent distribution
@@ -189,7 +190,9 @@ class ConditionalVariationalAutoEncoder(Application):
         optimizer=None,
         **kwargs,
     ):
-        self.encoder = encoder or self._get_default_encoder(input_size, condition_dim, channels)
+        self.encoder = encoder or self._get_default_encoder(
+            input_size, condition_dim, channels
+        )
         self.fc_mu = nn.Linear(
             channels[-1],
             latent_dim,
@@ -265,9 +268,9 @@ class ConditionalVariationalAutoEncoder(Application):
         """
 
         decoder = MultiLayerPerceptron(
-            in_features = input_size + condition_dim,
-            hidden_features = channels,
-            out_features = channels[-1],
+            in_features=input_size + condition_dim,
+            hidden_features=channels,
+            out_features=channels[-1],
         )
         return decoder
 
@@ -318,10 +321,10 @@ class ConditionalVariationalAutoEncoder(Application):
         """
 
         encoder = MultiLayerPerceptron(
-        in_features = channels[0],
-        hidden_features = channels,
-        out_features = input_size,
-    )
+            in_features=channels[0],
+            hidden_features=channels,
+            out_features=input_size,
+        )
         return encoder
 
     def encode(self, x, c):
@@ -361,7 +364,7 @@ class ConditionalVariationalAutoEncoder(Application):
 
         if len(c.shape) == 1:
             c = c.unsqueeze(1)
-    
+
         x = torch.cat([x, c], dim=1)
         x = self.encoder(x)
         mu = self.fc_mu(x)
@@ -441,12 +444,12 @@ class ConditionalVariationalAutoEncoder(Application):
 
         if len(c.shape) == 1:
             c = c.unsqueeze(1)
-    
+
         z = torch.cat([z, c], dim=1)
         x = self.fc_dec(z)
         x = self.decoder(x)
         return x
-        
+
     def train_preprocess(self, batch):
         """Preprocesses a batch of data for training.
 
@@ -487,7 +490,7 @@ class ConditionalVariationalAutoEncoder(Application):
 
     val_preprocess = train_preprocess
     test_preprocess = train_preprocess
-    
+
     def training_step(self, batch, batch_idx):
         """Performs a single training step.
 
@@ -576,7 +579,7 @@ class ConditionalVariationalAutoEncoder(Application):
         tensor(5440.9023, grad_fn=<AddBackward0>)
         """
 
-        x, y, c  = self.test_preprocess(batch)
+        x, y, c = self.test_preprocess(batch)
         y_hat, mu, log_var, z = self(x, c)
         rec_loss, KLD = self.compute_loss(y_hat, y, mu, log_var)
         tot_loss = rec_loss + self.beta * KLD
@@ -591,7 +594,7 @@ class ConditionalVariationalAutoEncoder(Application):
                 logger=True,
             )
         return tot_loss
-        
+
     def validation_step(self, batch, batch_idx):
         """Performs a single validation step.
 
@@ -643,7 +646,7 @@ class ConditionalVariationalAutoEncoder(Application):
                 logger=True,
             )
         return tot_loss
-    
+
     def compute_loss(self, y_hat, y, mu, log_var):
         """Computes reconstruction and KL divergence losses.
 
