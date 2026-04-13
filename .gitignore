@@ -1,1 +1,5 @@
 .DS_Store
+lightning_logs/
+.ipynb_checkpoints/
+__pycache__/
+tutorial/QC/3t3_cell_dataset/
