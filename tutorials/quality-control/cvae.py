@@ -167,6 +167,7 @@ class ConditionalVariationalAutoEncoder(Application):
         )
         (optimizer): Adam[Adam](lr=0.0001)
         )
+
     """
 
     input_size: int
@@ -249,6 +250,7 @@ class ConditionalVariationalAutoEncoder(Application):
             Reconstruction loss function.
         optimizer : Optimizer
             Optimizer used for training.
+
         """
 
         if encoder is not None:
@@ -349,6 +351,7 @@ class ConditionalVariationalAutoEncoder(Application):
                 )
             )
             )
+
         """
 
         decoder = MultiLayerPerceptron(
@@ -407,6 +410,7 @@ class ConditionalVariationalAutoEncoder(Application):
                 )
             )
         )
+
         """
 
         encoder = MultiLayerPerceptron(
@@ -454,6 +458,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> mu, log_var = cvae.encode(x, c)
         >>> mu.shape, log_var.shape
         (torch.Size([10, 20]), torch.Size([10, 20]))
+
         """
 
         if len(c.shape) == 1:
@@ -501,6 +506,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> z = cvae.reparameterize(mu, log_var)
         >>> z.shaoe
         >>> torch.Size([10, 20])
+
         """
 
         std = torch.exp(0.5 * log_var)
@@ -545,6 +551,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> x_hat = cvae.decode(z, c)
         >>> x_hat.shape
         torch.Size([10, 784])
+
         """
 
         if len(c.shape) == 1:
@@ -590,6 +597,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> x_p, y_p, c_p = cvae.train_preprocess(batch)
         >>> x_p.shape, y_p.shape, c_p.shape
         (torch.Size([10, 784]), torch.Size([10, 784]), torch.Size([10, 10]))
+
         """
 
         x, y, c = batch
@@ -641,6 +649,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_train = cvae.training_step(batch, _)
         >>> loss_train
         tensor(5442.5708, grad_fn=<AddBackward0>)
+
         """
 
         x, y, c = self.train_preprocess(batch)
@@ -701,6 +710,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_test = cvae.test_step(batch, _)
         >>> loss_test
         tensor(5440.9023, grad_fn=<AddBackward0>)
+
         """
 
         x, y, c = self.test_preprocess(batch)
@@ -761,6 +771,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_val = cvae.validation_step(batch, _)
         >>> loss_val
         tensor(5437.9136, grad_fn=<AddBackward0>)
+
         """
 
         x, y, c = self.val_preprocess(batch)
@@ -825,6 +836,7 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> mu, log_var = torch.randn(10, 20), torch.randn(10, 20)
         >>> cvae.compute_loss(y_hat, y, mu, log_var)
         (tensor(7845.0801), tensor(177.7961))
+
         """
 
         rec_loss = self.reconstruction_loss(y_hat, y)
@@ -870,6 +882,7 @@ class ConditionalVariationalAutoEncoder(Application):
          torch.Size([10, 20]),
          torch.Size([10, 20]),
          torch.Size([10, 20]))
+
         """
 
         mu, log_var = self.encode(x, c)
