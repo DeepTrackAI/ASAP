@@ -167,7 +167,6 @@ class ConditionalVariationalAutoEncoder(Application):
         )
         (optimizer): Adam[Adam](lr=0.0001)
         )
-
     """
 
     input_size: int
@@ -189,12 +188,68 @@ class ConditionalVariationalAutoEncoder(Application):
         encoder: nn.Module | None = None,
         decoder: nn.Module | None = None,
         reconstruction_loss: Callable = nn.BCELoss(reduction="sum"),
-        latent_dim: int = 2,  # TODO: Check that 2 is good default.
+        latent_dim: int = 2,
         beta: float = 1.0,
         optimizer: Optimizer | None = None,
         **kwargs: Any,
     ) -> None:
-        # TODO: Add docstring also for init.
+        """Initializes the Conditional Variational Autoencoder (CVAE).
+
+        This constructor builds a conditional variational autoencoder that
+        learns a latent representation conditioned on auxiliary variables.
+        The model consists of an encoder, latent projection layers (mu and
+        log variance), and a decoder that reconstructs the input from the
+        latent space and condition.
+
+        If no encoder or decoder is provided, default MLP-based architectures
+        are constructed using the specified hidden channel sizes.
+
+        Parameters
+        ----------
+        input_size : int
+            Dimensionality of the input data.
+        condition_dim : int
+            Dimensionality of the conditioning variable.
+        channels : list[int]
+            Hidden layer sizes used for encoder and decoder MLPs.
+        encoder : nn.Module or None, optional
+            Custom encoder network. If None, a default encoder is used.
+        decoder : nn.Module or None, optional
+            Custom decoder network. If None, a default decoder is used.
+        reconstruction_loss : Callable, optional
+            Reconstruction loss function. Default is BCELoss with sum reduction.
+            Used to measure similarity between reconstructed and target inputs.
+        latent_dim : int, optional
+            Dimensionality of the latent space. Default is 2.
+        beta : float, optional
+            Weight of KL divergence term in the total loss (β-VAE trade-off).
+            Controls balance between reconstruction quality and disentanglement.
+        optimizer : Optimizer or None, optional
+            Optimizer used for training. If None, Adam with lr=1e-4 is used.
+        **kwargs : Any
+            Additional arguments passed to the parent `Application` class.
+
+        Attributes
+        ----------
+        encoder : nn.Module
+            Encoder network mapping (x, c) → hidden representation.
+        decoder : nn.Module
+            Decoder network mapping (z, c) → reconstructed input.
+        fc_mu : nn.Linear
+            Linear layer producing latent mean vector.
+        fc_var : nn.Linear
+            Linear layer producing latent log-variance vector.
+        fc_dec : nn.Linear
+            Linear projection from latent+condition to decoder input space.
+        latent_dim : int
+            Dimensionality of latent space.
+        beta : float
+            KL divergence weighting coefficient.
+        reconstruction_loss : Callable
+            Reconstruction loss function.
+        optimizer : Optimizer
+            Optimizer used for training.
+        """
 
         if encoder is not None:
             self.encoder = encoder
@@ -352,7 +407,6 @@ class ConditionalVariationalAutoEncoder(Application):
                 )
             )
         )
-
         """
 
         encoder = MultiLayerPerceptron(
@@ -400,7 +454,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> mu, log_var = cvae.encode(x, c)
         >>> mu.shape, log_var.shape
         (torch.Size([10, 20]), torch.Size([10, 20]))
-
         """
 
         if len(c.shape) == 1:
@@ -448,7 +501,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> z = cvae.reparameterize(mu, log_var)
         >>> z.shaoe
         >>> torch.Size([10, 20])
-
         """
 
         std = torch.exp(0.5 * log_var)
@@ -493,7 +545,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> x_hat = cvae.decode(z, c)
         >>> x_hat.shape
         torch.Size([10, 784])
-
         """
 
         if len(c.shape) == 1:
@@ -539,7 +590,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> x_p, y_p, c_p = cvae.train_preprocess(batch)
         >>> x_p.shape, y_p.shape, c_p.shape
         (torch.Size([10, 784]), torch.Size([10, 784]), torch.Size([10, 10]))
-
         """
 
         x, y, c = batch
@@ -558,7 +608,7 @@ class ConditionalVariationalAutoEncoder(Application):
         batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
-        """Perform a single training step.
+        """Perform a single training step, the hook for Lightning.
 
         This method processes a batch of data, computes the forward pass,
         calculates reconstruction and KL divergence losses, and logs them.
@@ -591,7 +641,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_train = cvae.training_step(batch, _)
         >>> loss_train
         tensor(5442.5708, grad_fn=<AddBackward0>)
-
         """
 
         x, y, c = self.train_preprocess(batch)
@@ -619,7 +668,7 @@ class ConditionalVariationalAutoEncoder(Application):
         batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
-        """Performs a single test step.
+        """Performs a single test step, the hook for Lightning.
 
         This method evaluates the model on a test batch and logs the
         reconstruction and KL divergence losses.
@@ -652,7 +701,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_test = cvae.test_step(batch, _)
         >>> loss_test
         tensor(5440.9023, grad_fn=<AddBackward0>)
-
         """
 
         x, y, c = self.test_preprocess(batch)
@@ -675,13 +723,12 @@ class ConditionalVariationalAutoEncoder(Application):
 
         return tot_loss
 
-    # TODO: why not val_step? for consistency with val_preprocess?
     def validation_step(
         self: ConditionalVariationalAutoEncoder,
         batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
-        """Performs a single validation step.
+        """Performs a single validation step, the hook for Lightning.
 
         This method evaluates the model on a validation batch and logs the
         reconstruction and KL divergence losses.
@@ -714,7 +761,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> loss_val = cvae.validation_step(batch, _)
         >>> loss_val
         tensor(5437.9136, grad_fn=<AddBackward0>)
-
         """
 
         x, y, c = self.val_preprocess(batch)
@@ -779,7 +825,6 @@ class ConditionalVariationalAutoEncoder(Application):
         >>> mu, log_var = torch.randn(10, 20), torch.randn(10, 20)
         >>> cvae.compute_loss(y_hat, y, mu, log_var)
         (tensor(7845.0801), tensor(177.7961))
-
         """
 
         rec_loss = self.reconstruction_loss(y_hat, y)
@@ -792,7 +837,7 @@ class ConditionalVariationalAutoEncoder(Application):
         self: ConditionalVariationalAutoEncoder,
         x: torch.Tensor,
         c: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Define the forward pass of the CVAE.
 
         This method encodes the input and condition into a latent distribution,
@@ -807,7 +852,7 @@ class ConditionalVariationalAutoEncoder(Application):
 
         Returns
         -------
-        tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
             A tuple of PyTorch tensors, `(y_hat, mu, log_var, z)`.
 
         Examples
@@ -825,7 +870,6 @@ class ConditionalVariationalAutoEncoder(Application):
          torch.Size([10, 20]),
          torch.Size([10, 20]),
          torch.Size([10, 20]))
-
         """
 
         mu, log_var = self.encode(x, c)
