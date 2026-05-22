@@ -1,0 +1,212 @@
+Parameter guide for the DNA-chain AFM simulation and U-Net notebook
+This README lists the main parameters that can be changed in
+`Simulation_of_DNA_chain_with_U_Net.ipynb` and explains what each parameter
+controls. The notebook has two connected parts:
+A DNA-chain AFM simulation pipeline that generates images, DNA masks,
+crossing masks, and metadata.
+A DeepTrack/Deeplay U-Net workflow that trains, validates, and evaluates a
+two-channel model.
+The U-Net output channels are:
+channel 0: DNA segmentation logits
+channel 1: crossing logits
+Recommended tuning order
+For model output quality, the most influential parameters are usually:
+`N_SAMPLES`, `BEAD_COUNTS`, and AFM rendering/noise settings
+`BG_Q` and `HIGH_Q`
+`TRAIN_CFG["cross_loss_weight"]` and `TRAIN_CFG["cross_pos_weight"]`
+`TRAIN_CFG["dna_pos_weight"]`
+`TRAIN_CFG["lr"]` and `TRAIN_CFG["max_epochs"]`
+`MODEL_CFG["channels"]`
+`TARGET_SIZE`
+Evaluation thresholds in `dice_score_from_prob` and `iou_score_from_prob`
+Execution mode and dependencies
+Parameter	Current value	What it controls	Effect of changing it
+`USE_MD`	`True`	Whether OpenMM molecular dynamics is used for chain relaxation.	`True` gives more physically motivated chains but is slower and may require OpenMM. `False` uses the faster persistent-walk fallback.
+`SAMPLE_TIMEOUT_S`	`10.0`	Maximum allowed time per generated sample before the seed is skipped.	Increasing it allows slower MD samples to complete. Decreasing it skips expensive or unstable seeds sooner.
+Dataset output parameters
+Parameter	Current value	What it controls	Effect of changing it
+`OUT_DIR`	`"dna_dataset_100_4lengths_MD"`	Root directory for generated images, masks, metadata, and manifest.	Change this to keep different generated datasets separate.
+`N_SAMPLES`	`100`	Number of valid simulated samples to write.	More samples usually improve generalization but increase generation and training time.
+`BASE_SEED`	`1`	First random seed used during dataset generation.	Changing this creates a different dataset while keeping the same settings.
+`EXPORT_PREVIEW_PNGS`	`False`	Whether to save PNG previews of selected generated samples.	Enable for quick visual checks without loading `.npy` arrays.
+`PREVIEW_PNG_INDICES`	`set(range(4, 8))`	Dataset indices to export as preview PNGs.	Change to preview different samples.
+`PREVIEW_PNG_DIR`	`OUT_DIR/preview_pngs`	Directory where preview PNGs are written.	Change only if you want previews outside the dataset folder.
+Image size and resolution
+Parameter	Current value	What it controls	Effect of changing it
+`NX`	`512`	Simulated AFM image width in pixels.	Larger values preserve more detail but increase memory and runtime.
+`NY`	`512`	Simulated AFM image height in pixels.	Should usually match `NX` for square U-Net inputs.
+`TARGET_SIZE`	`int(NX)`	Final U-Net input and target size after resizing/padding.	Larger values preserve thin DNA details but require more GPU/CPU memory.
+Chain geometry parameters
+Parameter	Current value	What it controls	Effect of changing it
+`N_BEADS`	`90`	Default bead count used for visualization and single-chain tests.	More beads produce longer chains.
+`BEAD_COUNTS`	`[70, 80, 90, 100]`	Bead counts cycled through during dataset generation.	Controls the distribution of DNA contour lengths in the training set.
+`BOND_LENGTH`	`1.0`	Distance between adjacent beads.	Larger values make the same bead count cover a longer contour length.
+`PERSISTENCE_BONDS`	`23.0`	Persistence length measured in bonds.	Higher values make chains straighter/stiffer; lower values make chains more flexible.
+`K_ANGLE`	`12.0`	Angular stiffness used during relaxation.	Higher values resist bending during MD relaxation.
+`BASE_Z`	`5.0`	Initial height above the substrate before relaxation.	Larger values start the chain farther from the substrate.
+`ANGLE_STIFNESS_MULT`	`0.4`	Angle stiffness multiplier in the non-MD chain mode.	Higher values make non-MD chains smoother and less sharply bent.
+Molecular-dynamics recording parameters
+Parameter	Current value	What it controls	Effect of changing it
+`N_FRAMES`	`200`	Number of MD frames recorded.	More frames allow longer relaxation but increase runtime.
+`STEPS_PER_FRAME`	`200`	MD integration steps between recorded frames.	Higher values increase relaxation time and computational cost.
+AFM rendering parameters
+These parameters shape the simulated AFM height map. The notebook uses the
+helper variables `tip_radius` and `nm_per_px` to set some `AFM_KW` entries.
+Parameter	Current value	What it controls	Effect of changing it
+`tip_radius`	`1`	User-level tip-radius control.	Larger values broaden AFM features and can make DNA appear wider.
+`nm_per_px`	`2`	User-level sampling control.	Larger values make each pixel represent more nanometers.
+`AFM_KW["dna_diameter_nm"]`	`2.0`	Physical DNA diameter used by the renderer.	Larger values make the rendered DNA strand wider.
+`AFM_KW["tip_radius_nm"]`	`0.01 * tip_radius`	Effective AFM tip radius in nanometers.	Larger values increase dilation-like broadening.
+`AFM_KW["max_height_nm"]`	`6.0`	Maximum displayed or rendered height scale.	Larger values allow taller features before saturation.
+`AFM_KW["target_nm_per_px"]`	`0.04 * nm_per_px`	Target render sampling in nanometers per pixel.	Smaller values increase render detail but may be slower.
+`AFM_KW["max_radius_px"]`	`96`	Maximum render radius in pixels.	Larger values allow larger local rendering neighborhoods.
+`AFM_KW["radius_shrink_px"]`	`0.0`	Shrinks the rendered radius.	Increasing can make DNA features thinner.
+`AFM_KW["final_blur_sigma_px"]`	`0.20`	Final Gaussian blur applied in pixels.	Higher values smooth the image and reduce sharp details.
+`AFM_KW["apply_edge_taper"]`	`True`	Whether to taper DNA edges.	Disabling can create sharper, less realistic strand edges.
+`AFM_KW["taper_sigma_nm"]`	`0.45`	Width of edge taper.	Higher values make edges softer.
+`AFM_KW["taper_floor"]`	`0.10`	Minimum taper value.	Higher values keep edges brighter.
+`AFM_KW["add_center_ridge"]`	`True`	Whether to add a central ridge along DNA.	Enables a brighter centerline on strands.
+`AFM_KW["ridge_sigma_nm"]`	`0.25`	Width of center ridge.	Higher values make the ridge wider.
+`AFM_KW["ridge_amp_nm"]`	`0.25`	Height of center ridge.	Higher values make the DNA centerline brighter.
+`AFM_KW["grain_nm"]`	`0.0`	Additional grain/noise on the DNA itself.	Higher values add roughness to rendered DNA.
+`AFM_KW["grain_sigma_px"]`	`0.6`	Smoothing scale for DNA grain.	Higher values make grain smoother.
+Crossing rendering and height-boost parameters
+These parameters affect how crossings are rendered in the AFM image and how
+crossing information is returned for mask generation.
+Parameter	Current value	What it controls	Effect of changing it
+`AFM_KW["enable_crossing_boost"]`	`True`	Whether detected crossings are made taller in the AFM image.	Enabling makes crossings more visible to the model.
+`AFM_KW["min_separation_beads"]`	`12`	Minimum bead separation for crossing boosting.	Higher values reduce accidental boosting of neighboring chain segments.
+`AFM_KW["boost_window_beads"]`	`2`	Number of beads around a crossing that receive height boost.	Larger windows spread crossing enhancement farther along the chain.
+`AFM_KW["guaranteed_offset_nm"]`	`1.0`	Height added at boosted crossings.	Higher values make crossing regions brighter/taller.
+`AFM_KW["boost_method"]`	`"additive"`	How crossing boost is applied.	Additive boosting increases height by an offset.
+`AFM_KW["boost_profile"]`	`"gaussian"`	Shape of the crossing boost.	Gaussian boost gives a smooth crossing enhancement.
+`AFM_KW["boost_sigma_beads"]`	`None`	Width of boost profile in beads.	Set manually to control how localized crossing boost is.
+`AFM_KW["far_clip_nm"]`	`2.5`	Height clipping for non-crossing beads.	Lower values make non-crossing DNA less tall relative to crossings.
+`AFM_KW["far_clip_window_beads"]`	`3`	Window around clipped beads.	Larger values apply clipping over a wider bead neighborhood.
+`AFM_KW["return_crossing_info"]`	`True`	Whether the renderer returns crossing information.	Keep `True` if crossing masks are needed.
+`AFM_KW["return_masks"]`	`True`	Whether masks are returned by the rendering pipeline.	Keep `True` for U-Net training.
+DNA mask parameters
+Parameter	Current value	What it controls	Effect of changing it
+`DNA_MASK_DILATE_PX`	`3`	Dilation width for the DNA ground-truth mask.	Larger values create thicker DNA masks; smaller values create thinner masks.
+Crossing mask parameters
+Parameter	Current value	What it controls	Effect of changing it
+`CROSS_MIN_SEP_BEADS`	`10`	Minimum bead separation for crossing detection.	Higher values reduce false crossings from nearby chain neighbors.
+`CROSS_SIGMA_CENTER_PX`	`4.0`	Gaussian width around crossing centers.	Higher values make crossing targets broader.
+`CROSS_SIGMA_PERP_PX`	`1.8`	Perpendicular Gaussian width for crossing masks.	Higher values spread crossing signal away from the centerline.
+`CROSS_CHAIN_EXTENT`	`4.0`	Length of chain-weighted crossing mask.	Higher values extend crossing targets along the chain.
+`CROSS_CENTER_WEIGHT`	`1.5`	Weight of the central crossing peak.	Higher values emphasize the crossing center.
+`CROSS_CHAIN_WEIGHT`	`0.9`	Weight of chain-aligned crossing signal.	Higher values make crossing targets more elongated along the chain.
+`CROSS_CLIP_TO_DNA_MASK`	`True`	Whether crossing masks are clipped to DNA mask regions.	Keep `True` to prevent crossing targets outside DNA.
+Noise parameters
+Parameter	Current value	What it controls	Effect of changing it
+`TARGET_NOISE_RMS_NM`	`0.27`	Noise amplitude in nanometers.	Higher values make images noisier and training harder.
+`USE_BLANK_SPM_NOISE`	`True`	Whether to use a real blank `.spm` substrate scan as the noise source.	Enables more realistic experimental background if the file exists.
+`USE_PLANE_REMOVE`	`True`	Whether to remove plane tilt from blank SPM noise.	Helps remove broad background slopes.
+`USE_LINE_FLATTEN`	`True`	Whether to line-flatten blank SPM noise.	Reduces scan-line artifacts.
+`USE_BANDPASS_FILTER`	`True`	Whether to bandpass-filter blank SPM noise.	Controls spatial frequency content of the background noise.
+`BLANK_SPM_PATH`	`"20240411_blank_water.0_00000.spm"`	Path to the blank substrate scan.	Change to your local blank SPM file.
+`USE_PSD_NOISE_FALLBACK`	`True`	Whether to use PSD-model noise if blank SPM noise is unavailable.	Keep `True` for portability when the blank file is missing.
+`MODEL_PATH`	`"/content/psd_noise_model.npz"`	Path to the PSD noise model.	Change when running locally or using a different PSD model.
+`PSD_NOISE_METHOD`	`"mean_full2d"`	PSD noise generation method.	Alternative methods can change texture and variability.
+`PSD_NOISE_STD_SCALE`	`2.0`	Scaling of PSD noise variation.	Higher values increase the variation in generated noise.
+DeepTrack source and preprocessing parameters
+Parameter	Current value	What it controls	Effect of changing it
+`SEED`	`7`	Random seed for train/validation splitting and training reproducibility.	Changing this changes the train/validation split and stochastic training operations.
+`manifest_path`	`Path(OUT_DIR) / "manifest.csv"`	CSV manifest used to build DeepTrack source records.	Change if loading an existing dataset from a different location.
+`VAL_FRACTION`	`0.20`	Fraction of samples used for validation.	Higher values give more validation data but less training data.
+`BG_Q`	`50`	Background percentile used by `normalize_afm`.	Higher values subtract more background and can suppress faint DNA. Lower values preserve faint signal but may keep more background.
+`HIGH_Q`	`99.97`	High percentile used by `normalize_afm`.	Lower values brighten ordinary DNA. Higher values preserve extreme peaks and crossings.
+`augment` in `DeepTrackSourceDataset`	`True` for training, `False` for validation/test	Whether flips and rotations are applied.	Training augmentation improves robustness; validation/test should remain unaugmented.
+Manifest column parameters
+These tuples define which manifest columns are accepted when building the
+DeepTrack source records.
+Parameter	Current value	What it controls	Effect of changing it
+`IMAGE_COLUMNS`	`('image_npy', 'image_path', 'img_path', 'afm_path')`	Accepted image column names.	Add names if your manifest uses a different image column.
+`DNA_COLUMNS`	`('dna_mask_npy', 'dna_path', 'mask_path', 'label_path')`	Accepted DNA-mask column names.	Add names if your manifest uses a different mask column.
+`CROSS_COLUMNS`	`('cross_mask_npy', 'cross_path', 'crossing_path')`	Accepted crossing-mask column names.	Add names if your manifest uses a different crossing column.
+Model architecture parameters
+Parameter	Current value	What it controls	Effect of changing it
+`MODEL_CFG["in_channels"]`	`1`	Number of input channels.	Keep `1` for single-channel AFM height maps.
+`MODEL_CFG["channels"]`	`[16, 32, 64, 128]`	U-Net encoder/decoder channel widths.	Larger values increase model capacity and memory use. Smaller values train faster but may underfit.
+`MODEL_CFG["out_channels"]`	`2`	Number of output channels.	Keep `2` for DNA and crossing outputs.
+`skip=dl.Cat()`	`dl.Cat()`	Skip-connection merge operation.	Concatenation preserves encoder features but increases decoder channel count.
+Training parameters
+Parameter	Current value	What it controls	Effect of changing it
+`TRAIN_CFG["batch_size"]`	`4`	Number of samples per gradient update.	Larger batches give smoother gradients but need more memory.
+`TRAIN_CFG["num_workers"]`	`0`	DataLoader worker processes.	`0` is safest for Windows/macOS and notebooks using DeepTrack sources. Higher values may speed loading on Linux.
+`TRAIN_CFG["max_epochs"]`	`50`	Number of full passes through the training data.	More epochs can improve training until overfitting begins.
+`TRAIN_CFG["lr"]`	`1e-3`	Learning rate for the Adam optimizer.	Lower values train more slowly but may be more stable. Higher values train faster but can overshoot.
+`log_every_n_steps`	`10`	Logging frequency during training.	Lower values produce more frequent logs.
+`precision`	CUDA: `16-mixed`; otherwise `32-true`	Floating-point precision used by the trainer.	Mixed precision is faster on CUDA GPUs; `32-true` is safer on CPU/MPS.
+`accelerator`	`"auto"`	Device selection for Lightning/Deeplay.	Automatically selects CUDA, MPS, or CPU when available.
+`devices`	`"auto"`	Number/device selection for training.	Usually leave as `auto`.
+Loss-function parameters
+Parameter	Current value	What it controls	Effect of changing it
+`TRAIN_CFG["dna_pos_weight"]`	`2.0`	Positive-class weight in DNA BCE loss.	Higher values penalize missed DNA pixels more and can improve recall, but may increase false positives.
+`TRAIN_CFG["dna_loss_weight"]`	`1.0`	Overall weight of DNA BCE-Dice loss.	Higher values prioritize DNA segmentation over crossings.
+`TRAIN_CFG["cross_loss_weight"]`	`0.08`	Overall weight of crossing loss.	Higher values make the model focus more on crossings; lower values prioritize DNA segmentation.
+`TRAIN_CFG["cross_pos_weight"]`	`50`	Local weight for positive crossing pixels.	Higher values fight crossing collapse but may make the crossing head respond to DNA edges.
+`TRAIN_CFG["dice_smooth"]`	`1.0`	Smoothing value in Dice loss and metric.	Usually leave near `1.0`; prevents division by zero on sparse masks.
+Evaluation parameters
+Parameter	Current value	What it controls	Effect of changing it
+`threshold` in `dice_score_from_prob`	`0.5`	Probability threshold for DNA Dice.	Lower values increase predicted DNA area; higher values make masks stricter.
+`threshold` in `iou_score_from_prob`	`0.5`	Probability threshold for DNA IoU.	Same effect as Dice threshold, but measured by IoU.
+`eps`	`1e-6`	Numerical stability constant.	Usually do not change.
+`index` in `show_prediction`	`1`	Which sample in a batch is plotted.	Change to inspect different examples.
+Real-test-data parameters
+Parameter	Current value	What it controls	Effect of changing it
+`TEST_ZIP_PATH`	`Path("data_picoz.zip")`	Zip file containing real test data.	Change to the uploaded test-data zip filename.
+`TEST_ROOT`	`Path("all_data")`	Root directory containing extracted or existing real test data.	Change to evaluate a different real dataset folder.
+`TEST_EXTENSIONS`	`{'.png', '.jpg', '.jpeg', '.tif', '.tiff', '.npy'}`	Supported real-test file formats.	Add extensions if your real data uses another supported format.
+`IMAGE_KEYWORDS`	`('image', 'images', 'img', 'afm', 'raw')`	Keywords used to identify real AFM images.	Edit if your image folders/files use different names.
+`DNA_MASK_KEYWORDS`	`('mask', 'masks', 'label', 'labels', 'seg', 'segmentation')`	Keywords used to identify DNA masks.	Edit if your mask folders/files use different names.
+`CROSS_MASK_KEYWORDS`	`('cross', 'crossing', 'crossings')`	Keywords used to identify crossing masks.	Edit if crossing labels use different names.
+`num_workers` in `test_loader`	`0`	Worker processes for real-test loading.	Keep `0` for portability with DeepTrack sources on Windows/macOS.
+Common tuning recipes
+Improve DNA recall
+Try increasing:
+```python
+TRAIN_CFG["dna_pos_weight"] = 2.0  # or 4.0
+```
+You can also lower the prediction threshold during evaluation, for example
+from `0.5` to `0.4`.
+Reduce DNA false positives
+Try decreasing:
+```python
+TRAIN_CFG["dna_pos_weight"] = 1.0
+```
+or increasing the evaluation threshold from `0.5` to `0.6`. Small isolated
+false positives can also be removed during postprocessing.
+Make crossings less important
+Decrease the global crossing task weight:
+```python
+TRAIN_CFG["cross_loss_weight"] = 0.05
+```
+This keeps the network focused on DNA segmentation.
+Prevent crossing collapse to zero
+Increase the positive crossing-pixel weight:
+```python
+TRAIN_CFG["cross_pos_weight"] = 20.0  # or 50.0
+```
+If the crossing head starts tracing the whole DNA chain, reduce this value or
+add an explicit penalty for false crossing predictions on non-crossing DNA.
+Make simulated DNA look more like real AFM data
+Tune these together:
+```python
+BG_Q
+HIGH_Q
+TARGET_NOISE_RMS_NM
+tip_radius
+nm_per_px
+AFM_KW["final_blur_sigma_px"]
+AFM_KW["ridge_amp_nm"]
+```
+These control contrast, noise, width, blur, and ridge strength.
+Notes on portability
+`USE_MD=True` requires OpenMM. This can be slower and more platform-specific.
+`TRAIN_CFG["num_workers"] = 0` is the safest setting for Windows, macOS, and
+notebooks using DeepTrack sources.
+The trainer uses CUDA mixed precision only when CUDA is available. Apple
+Silicon MPS and CPU use `32-true` precision.
+Real-test matching depends on file and folder names. If no samples are found,
+update `IMAGE_KEYWORDS`, `DNA_MASK_KEYWORDS`, and `CROSS_MASK_KEYWORDS`.
