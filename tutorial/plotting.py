@@ -22,17 +22,33 @@ except Exception as error:
 
 
 def show_curve_for_pixel(
+    test_collection: dict,
+    predicted_stiffness_maps_kpa: np.ndarray,
+    predicted_contact_point_maps_nm: np.ndarray,
+    model_config: dict,
     row_index: int,
     col_index: int,
     hertz,
-) -> None:
+):
     """Static fallback: plot the force curve for one pixel.
     
     Parameters
     ----------
-    row_index : int
+    test_collection: dict
+        Dictionary containing test data, including measured force curves,
+        displacement curves, curve lengths, retract start indices, and 
+        stiffness maps.
+    predicted_stiffness_maps_kpa: np.ndarray
+        2D array of predicted stiffness values in kPa for the example sample.
+    predicted_contact_point_maps_nm: np.ndarray
+        2D array of predicted contact point values in nm for the example 
+        sample.
+    model_config: dict
+        Dictionary containing model configuration, including whether contact 
+        point prediction is enabled.
+    row_index: int
         Row index of the pixel to display.
-    col_index : int
+    col_index: int
         Column index of the pixel to display.
         
     Returns
@@ -64,7 +80,8 @@ def show_curve_for_pixel(
         cp_true = contact_point_maps[row_index, col_index]
         cp_pred = \
         predicted_contact_point_maps_nm[row_index, col_index]
-        title += f" | cp true = {cp_true:.1f} nm | cp pred = {cp_pred*1e9:.1f} nm"
+        title += \
+            f" | cp true = {cp_true:.1f} nm | cp pred = {cp_pred*1e9:.1f} nm"
 
     fig, ax = plt.subplots(figsize=(10, 5.5))
     ax.plot(displacement_curve_um[:retract_start], curve_nN[:retract_start], \
@@ -103,40 +120,46 @@ def display_clickable_stiffness_map(
     simulation_config = None,
     abstract_figure: bool = False,
     save_dir: str = "results",
-) -> None:
+):
     """Display a clickable predicted stiffness map linked to a force-curve
     panel.
     
     Parameters
     ----------
-    map_width : int, optional
+    map_width: int, optional
         Width of the stiffness map panel in pixels (default is 560).
-    map_height : int, optional
+    map_height: int, optional
         Height of the stiffness map panel in pixels (default is 560).
-    curve_width : int, optional
+    curve_width: int, optional
         Width of the force curve panel in pixels (default is 980).
-    curve_height : int, optional
+    curve_height: int, optional
         Height of the force curve panel in pixels (default is 560).
-    test_collection : dict, optional
+    test_collection: dict, optional
         Dictionary containing test data, including measured force curves,
-        displacement curves, curve lengths, retract start indices, and stiffness maps (default is None).
-    example_stiffness_map_pa : np.ndarray, optional
-        2D array of true stiffness values in Pascals for the example sample (default is None).
-    predicted_stiffness_map_pa : np.ndarray, optional
-        2D array of predicted stiffness values in Pascals for the example sample (default is None).
-    approach_force : np.ndarray, optional
-        2D array of predicted approach forces in Newtons for the example sample (default is None).
-    predicted_contact_point_map_m : np.ndarray, optional
-        2D array of predicted contact point values in meters for the example sample (default is None).
-    contact_model : ContactModel, optional
+        displacement curves, curve lengths, retract start indices, and 
+        stiffness maps (default is None).
+    example_stiffness_map_pa: np.ndarray, optional
+        2D array of true stiffness values in Pascals for the example sample 
+        (default is None).
+    predicted_stiffness_map_pa: np.ndarray, optional
+        2D array of predicted stiffness values in Pascals for the example 
+        sample (default is None).
+    approach_force: np.ndarray, optional
+        2D array of predicted approach forces in Newtons for the example sample 
+        (default is None).
+    predicted_contact_point_map_m: np.ndarray, optional
+        2D array of predicted contact point values in meters for the example 
+        sample (default is None).
+    contact_model: ContactModel, optional
         Contact model to use for force calculation (default is None).
-    simulation_config : SimulationConfig, optional
-        Simulation configuration containing tip shape and other parameters (default is None).
-    abstract_figure : bool, optional
+    simulation_config: SimulationConfig, optional
+        Simulation configuration containing tip shape and other parameters 
+        (default is None).
+    abstract_figure: bool, optional
         When True, each clicked pixel also saves a minimal matplotlib figure
         (approach curve + predicted Hertz fit + GT Hertz fit) with a
         transparent background and no axes to ``save_dir`` (default is False).
-    save_dir : str, optional
+    save_dir: str, optional
         Directory in which abstract figures are saved (default is "results").
             
     Returns
@@ -188,7 +211,8 @@ def display_clickable_stiffness_map(
     curve_fig = go.FigureWidget(data=[
     go.Scatter(name="Approach", mode="lines", line={"width": 3}),
     go.Scatter(name="Retract", mode="lines", line={"width": 3}),
-    go.Scatter(name="Hertz fit", mode="lines", line={"width": 2, "dash": "dash", "color": "green"}),
+    go.Scatter(name="Hertz fit", mode="lines", \
+               line={"width": 2, "dash": "dash", "color": "green"}),
 ])
     curve_fig.update_layout(
         title={"text": "Select a pixel", "y": 0.98, "x": 0.5, \
@@ -206,25 +230,27 @@ def display_clickable_stiffness_map(
     curve_fig.update_yaxes(tickfont={"size": 12}, title_font={"size": 15})
 
     def handle_click(
-            trace: go.Scatter, 
+            trace, 
             points, 
             selector
-        ) -> None:
-        """Update the force curve plot based on the clicked pixel in the stiffness map.
+        ):
+        """Update the force curve plot based on the clicked pixel in the 
+        stiffness map.
 
         Parameters
         ----------
-        trace : go.Scatter
+        trace: go.Scatter
             The scatter trace that was clicked.
-        points : go.Points
+        points: go.Points
             The points that were clicked, containing the x and y coordinates.
-        selector : go.Selector
+        selector: go.Selector
             The selector object (not used in this function).
 
         Returns
         -------
         None
-            Updates the force curve plot with the data corresponding to the clicked pixel.
+            Updates the force curve plot with the data corresponding to the 
+            clicked pixel.
 
         """
         
@@ -236,7 +262,8 @@ def display_clickable_stiffness_map(
         retract_start = int(retract_starts[row_index, col_index])
         x_curve = disp_um[row_index, col_index]
         y_curve = curves_nN[row_index, col_index]
-        hertz = approach_force[row_index, col_index] if approach_force is not None else None
+        hertz = approach_force[row_index, col_index] \
+            if approach_force is not None else None
         title = (
             f"Pixel ({row_index}, {col_index}) | "
             f"True {true_map[row_index, col_index]:.1f} kPa | "
@@ -244,7 +271,7 @@ def display_clickable_stiffness_map(
         )
         if cp_true_map is not None and cp_pred_map is not None:
             title += (
-                f" | Contact point true {cp_true_map[row_index, col_index]:.0f} nm"
+                f"Contact point true {cp_true_map[row_index, col_index]:.0f}nm"
                 f" predicted {cp_pred_map[row_index, col_index]:.0f} nm"
             )
         with curve_fig.batch_update():
@@ -291,10 +318,6 @@ def display_clickable_stiffness_map(
                     hertz[:valid_length] * 1e9,
                     linewidth=4,
                 )
-            # ax_abs.plot(
-            #     disp_m[:valid_length] * 1e6,
-            #     gt_force_n * 1e9,
-            # )
             ax_abs.axis("off")
             fig_abs.patch.set_alpha(0)
             ax_abs.patch.set_alpha(0)
@@ -316,3 +339,134 @@ def display_clickable_stiffness_map(
                         justify_content="space-between", align_items="center"),
         )
     )
+
+
+def force_curve_prediction_widget(
+    x_list_sort,
+    y_list_sort,
+    y_hat_list_sort,
+    diff_sort,
+    cp_ml_sort,
+    cp_mse_sort,
+):      
+    """Display an interactive widget to visualize predicted force curves and 
+    contact points.
+    
+    Parameters
+    ----------
+    x_list_sort: list of np.ndarray
+        List of x-axis values (displacement) for each curve, sorted by 
+        reconstruction loss.
+    y_list_sort: list of np.ndarray
+        List of true y-axis values (force) for each curve, sorted by 
+        reconstruction loss.
+    y_hat_list_sort: list of np.ndarray
+        List of predicted y-axis values (force) for each curve, sorted by 
+        reconstruction loss.
+    diff_sort: list of float
+        List of reconstruction loss values for each curve, sorted in ascending 
+        order.
+    cp_ml_sort: list of float
+        List of contact point values predicted by the ML model for each curve, 
+        sorted by reconstruction loss
+    cp_mse_sort: list of float
+        List of contact point values obtained from MSE fit for each curve, 
+        sorted by reconstruction loss
+        
+    Returns
+    -------
+    None
+        Displays an interactive widget with a slider to visualize the true and 
+        predicted force curves, along with the contact points for each curve 
+        sorted by reconstruction loss.
+        
+    """
+
+    # Frames Construction
+    frames = []
+    for i in range(len(y_list_sort)):
+        frames.append(
+            go.Frame(
+                data=[
+                    go.Scatter(x= x_list_sort[i][0:1500],
+                            y=x_list_sort[i][1500::],
+                            mode="lines",
+                            name="Raw Data"
+                            ),
+                    go.Scatter(x= x_list_sort[i][0:1500],
+                            y=y_list_sort[i],
+                            mode="lines",
+                            name="ML"
+                            ),
+                    go.Scatter(x= x_list_sort[i][0:1500],
+                            y=y_hat_list_sort[i],
+                            mode="lines",
+                            name="MSE Fit"
+                            ),
+                ],
+                name=str(i),
+                layout=go.Layout(
+                    title=f"Reconstruction Loss={diff_sort[i]:.4f}",
+                    shapes=[dict(type="line",x0=cp_ml_sort[i],\
+                            x1=cp_ml_sort[i],y0=0,y1=1,yref="paper",\
+                            line=dict(color="red",width=2,dash="dash")),
+                            dict(type="line",x0=cp_mse_sort[i],\
+                            x1=cp_mse_sort[i],y0=0,y1=1,yref="paper",\
+                            line=dict(color="green",width=2,dash="dash"))\
+                    ]),
+            )
+        )
+
+    # Initial Picture
+    fig = go.Figure(
+        data=[
+            go.Scatter(x= x_list_sort[0][0:1500],
+                    y=x_list_sort[0][1500::],
+                    mode="lines",
+                    name="Raw Data"
+                    ),
+            go.Scatter(x= x_list_sort[0][0:1500],
+                    y=y_list_sort[0],
+                    mode="lines",
+                    name="ML"
+                    ),
+            go.Scatter(x= x_list_sort[0][0:1500],
+                    y=y_hat_list_sort[0],
+                    mode="lines",
+                    name="MSE Fit"
+                    ),
+        ],
+        layout=go.Layout(
+            title=f"Reconstruction Loss={diff_sort[0]:.4f}",
+            shapes=[dict(type="line",x0=cp_ml_sort[0],\
+                    x1=cp_ml_sort[0],y0=0,y1=1,yref="paper",\
+                    line=dict(color="red",width=2,dash="dash")),
+                    dict(type="line",x0=cp_mse_sort[0],\
+                    x1=cp_mse_sort[0],y0=0,y1=1,yref="paper",\
+                    line=dict(color="green",width=2,dash="dash"))\
+            ]),
+        frames=frames,
+    )
+
+    # Slider
+    sliders = [
+        {
+            "steps": [
+                {
+                    "args": [
+                        [str(i)],
+                        {"frame": {"duration": 0, "redraw": True}, \
+                        "mode": "immediate"},
+                    ],
+                    "label": f"{i}",
+                    "method": "animate",
+                }
+                for i in range(len(y_list_sort))
+            ],
+            "currentvalue": {"prefix": "Index: "},
+        }
+    ]
+
+    fig.update_layout(sliders=sliders, autosize=False, width=700, height=500)
+
+    fig.show()
