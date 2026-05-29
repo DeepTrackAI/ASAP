@@ -120,6 +120,8 @@ ASAP/
 │       ├── thermal-noise-data_vDeflection_*.tnd
 │       ├── plotting.py
 |       ├── results/                            # saved figures
+│       ├── logs/
+│       │   └── regressor/                           
 |       └── README.md
 ```
 
