@@ -170,14 +170,9 @@ ASAP/
 │   │   ├── QC.ipynb
 │   │   └── cvae.py
 │   │
-│   └── AFM simulation and regression model/
-│       ├── data/
-│       │   ├── thermal-noise-data_vDeflection_*.tnd
-│       │   └── force-save-*.jpk-force
-│       ├── notebooks/
-│       │   └── Part_3_AFM_simulation.ipynb
-│       ├── scripts/
-│       │   └── plotting.py
+│   └── simu-inference/
+│       ├── Part_1_AFM_simulation.ipynb
+│       ├── plotting.py
 │       ├── results/
 │       ├── logs/
 │       │   └── regressor/

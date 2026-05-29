@@ -116,12 +116,13 @@ Evaluation outputs:
 ASAP/
 ├── tutorials/    
 │   └── simu-inference
-│       └── notebooks/
-│           ├── Part_1_AFM_simulation_final.ipynb   ← this notebook                    
-│           ├── thermal-noise-data_vDeflection_*.tnd
-│           ├── plotting.py
-|           ├── results/                     # saved figures
-|           └── README.md
+│       ├── Part_1_AFM_simulation_final.ipynb   ← this notebook                    
+│       ├── thermal-noise-data_vDeflection_*.tnd
+│       ├── plotting.py
+|       ├── results/                            # saved figures
+│       ├── logs/
+│       │   └── regressor/                           
+|       └── README.md
 ```
 
 ---
