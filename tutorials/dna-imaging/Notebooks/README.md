@@ -97,7 +97,7 @@ For model output quality, the most influential settings are usually:
 ## AFM rendering parameters
 
 These parameters shape the simulated AFM height map. The notebook uses the
-helper variables `tip_radius` and `nm_per_px` to set some `AFM_KW` entries.
+helper variables `tip_radius_nm` and `chain_resolution` to set some `AFM_KW` entries.
 
 | Parameter | Current value | What it controls | Effect of changing it |
 |---|---:|---|---|
@@ -146,7 +146,7 @@ crossing information is returned for mask generation.
 
 | Parameter | Current value | What it controls | Effect of changing it |
 |---|---:|---|---|
-| `DNA_MASK_DILATE_PX` | `3` | Dilation width for the DNA ground-truth mask. | Larger values create thicker DNA masks; smaller values create thinner masks. |
+| `DNA_MASK_DIAMETER_NM` | `3` | Dilation width for the DNA ground-truth mask. | Larger values create thicker DNA masks; smaller values create thinner masks. |
 
 ---
 
