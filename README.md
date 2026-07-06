@@ -125,7 +125,7 @@ The workflow includes:
 
 Main notebook:
 
-* **AFM Simulation and Regression Model**
+* [**AFM Simulation and Regression Model**](tutorials/simu-inference/Part1_AFM_simulation_final.ipynb)
 
 # Repository Structure
 
