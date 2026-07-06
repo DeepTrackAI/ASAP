@@ -20,7 +20,7 @@ The model output channels are:
 
 ## Current simulation design
 
-The notebook now separates the physical simulation/rendering concepts that were previously coupled:
+The notebook separates the physical simulation/rendering concepts:
 
 | Concept | Current variable | Meaning |
 |---|---|---|
@@ -95,9 +95,7 @@ The main AFM rendering dictionary is `AFM_KW`.
 
 ### Edge taper logic at crossings
 
-The renderer no longer applies bottom-strand attenuation or soft underpass suppression. The DNA height field uses the full chain mask.
-
-The current edge taper rule is:
+The edge taper rule is:
 
 ```text
 Apply edge taper to DNA normally, including the bottom crossing strand,
@@ -110,7 +108,7 @@ In practice:
 edge_taper_region = dna_body_region & ~top_cross_region
 ```
 
-This prevents the old plus-shaped crossing artifact while still giving tapered DNA edges on the bottom strand outside the top-strand overlap.
+This prevents plus-shaped crossing artifact while still giving tapered DNA edges on the bottom strand outside the top-strand overlap.
 
 ### Tip convolution
 
@@ -245,18 +243,6 @@ canonical dsDNA persistence length ≈ 50 nm
 
 If real labelled masks with known base-pair counts are available, use their skeleton length to estimate an empirical pixel-to-bp or bead-to-bp mapping. This calibration is only valid for masks generated at the same image resolution, magnification, and preprocessing pipeline.
 
----
-
-## GitHub notebook rendering
-
-The notebook included here has been saved with GitHub-friendly metadata:
-
-- widget-view outputs that require missing Jupyter widget state have been removed;
-- Colab runtime metadata has been removed;
-- the kernel metadata has been reset to standard `python3`;
-- the notebook was validated with `nbformat` after editing.
-
-This avoids GitHub rendering errors related to missing widget `state` metadata.
 
 ---
 
