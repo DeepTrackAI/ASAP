@@ -469,48 +469,51 @@ be interpreted carefully.
 
 ## Directory structure
 
-The directory is typically structured like this, with 
+The tutorial folder in the repository:
 
 ```text
 ASAP/
 └── tutorials/
-    └── Simulation of DNA chains 
-        └── Notebooks
-        |   └── Simulation_of_DNA_chain_with_U_Net.ipynb
-        |   └── logs_res_unet/
-        |       └── train_<max_epochs>_epochs/
-        |           └── version_<N>/
-        |               └── metrics.csv
-        |
-        └── Noise assets
-        |   └── psd_noise_model.npz
-        |   └── 20240411_blank_water.0_00000.spm
-        |
-        └── Simulated data
-        |      dna_dataset_100_4lengths_MD/
-        |      ├── images/
-        |      |   ├── img_0000.npy
-        |      |   └── ...
-        |      ├── dna_masks/
-        |      |   ├── dna_0000.npy
-        |      |   └── ...
-        |      ├── cross_masks/
-        |      |   ├── cross_0000.npy
-        |      |   └── ...
-        |      ├── meta/
-        |      |   ├── meta_0000.npz
-        |      |   └── ...
-        |      └── manifest.csv
-        |
-        └── Test data
-        |   ├── images/
-        |   |   ├── img_00.npy
-        |   |   └── ...
-        |   └── masks/
-        |       ├── mask_00.npy
-        |       └── ...
-        |   
-        └── DNA_simulation_with_UNet_README.md
+    └── dna-imaging/
+        ├── README.md
+        ├── notebooks/
+        │   ├── README.md
+        │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
+        ├── noise-assets/
+        │   ├── psd_noise_model.npz
+        │   └── 20240411_blank_water.0_00000.spm
+        ├── simulated-data/
+        │   ├── img_0000.npy
+        │   └── ...
+        └── test-data/
+            ├── image_5.npy, image_5.png
+            ├── mask_5.npy, mask_5.png
+            └── ...
+```
+
+Running the notebook creates the following next to it:
+
+```text
+<OUT_DIR>/                    # e.g. dna_dataset_unnormalized_crossing_fixed_1000_4lengths_MD
+├── images/
+│   ├── img_0000.npy
+│   └── ...
+├── dna_masks/
+│   ├── dna_0000.npy
+│   └── ...
+├── cross_masks/
+│   ├── cross_0000.npy
+│   └── ...
+├── meta/
+│   ├── meta_0000.npz
+│   └── ...
+├── preview_pngs/             # optional
+└── manifest.csv
+
+logs_res_unet/
+└── train_<max_epochs>_epochs/
+    └── version_<N>/
+        └── metrics.csv
 ```
 
 ---

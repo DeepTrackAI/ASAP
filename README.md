@@ -89,7 +89,7 @@ The workflow includes:
 
 Main notebook:
 
-* [**Simulation of DNA chain with U-Net**](tutorials/Simulation%20of%20DNA%20chains/Notebooks/Simulation_of_DNA_chain_with_U_Net.ipynb)
+* [**Simulation of DNA chains and Res-U-Net**](tutorials/dna-imaging/notebooks/Simulation_of_DNA_chains_and_Res_U_Net.ipynb)
 
 ## AFM data quality control
 
@@ -125,7 +125,7 @@ The workflow includes:
 
 Main notebook:
 
-* [**AFM Simulation and Regression Model**](tutorials/simu-inference/Part1_AFM_simulation_final.ipynb)
+* [**AFM Simulation and Regression Model**](tutorials/simu-inference/Part_1_AFM_simulation_final.ipynb)
 
 # Repository Structure
 
@@ -134,35 +134,21 @@ The tutorial directories are organized as follows:
 ```text
 ASAP/
 ├── tutorials/
-│   ├── Simulation of DNA chains/
-│   │   ├── Notebooks/
-│   │   │   └── Simulation_of_DNA_chain_with_U_Net.ipynb
-│   │   ├── Noise assets/
+│   ├── dna-imaging/
+│   │   ├── README.md
+│   │   ├── notebooks/
+│   │   │   ├── README.md
+│   │   │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
+│   │   ├── noise-assets/
 │   │   │   ├── psd_noise_model.npz
 │   │   │   └── 20240411_blank_water.0_00000.spm
-│   │   ├── Simulated data/
-│   │   │   └── dna_dataset_100_4lengths_MD/
-│   │   │       ├── images/
-│   │   │       │   ├── img_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── dna_masks/
-│   │   │       │   ├── dna_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── cross_masks/
-│   │   │       │   ├── cross_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── meta/
-│   │   │       │   ├── meta_0000.npz
-│   │   │       │   └── ...
-│   │   │       └── manifest.csv
-│   │   ├── Test data/
-│   │   │   ├── images/
-│   │   │   │   ├── img_00.npy
-│   │   │   │   └── ...
-│   │   │   └── masks/
-│   │   │       ├── mask_00.npy
-│   │   │       └── ...
-│   │   └── DNA_simulation_with_UNet_README.md
+│   │   ├── simulated-data/
+│   │   │   ├── img_0000.npy
+│   │   │   └── ...
+│   │   └── test-data/
+│   │       ├── image_5.npy, image_5.png
+│   │       ├── mask_5.npy, mask_5.png
+│   │       └── ...
 │   │
 │   ├── quality-control/
 │   │   ├── 3t3_cell_dataset/
