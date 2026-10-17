@@ -89,7 +89,13 @@ The workflow includes:
 
 Main notebook:
 
-* [**Simulation of DNA chains and Res-U-Net**](tutorials/dna-imaging/notebooks/Simulation_of_DNA_chains_and_Res_U_Net.ipynb)
+* [**Simulation and segmentation of DNA imaged by AFM**](tutorials/dna-imaging/segmentation/DNA_simulation_and_segmentation.ipynb)
+  (helper scripts, trained checkpoints and TopoStats presets in the same folder; see its
+  [README](tutorials/dna-imaging/segmentation/README.md))
+
+Previous single-notebook version:
+
+* [Simulation of DNA chains and Res-U-Net](tutorials/dna-imaging/notebooks/Simulation_of_DNA_chains_and_Res_U_Net.ipynb)
 
 ## AFM data quality control
 
@@ -136,18 +142,23 @@ ASAP/
 ├── tutorials/
 │   ├── dna-imaging/
 │   │   ├── README.md
-│   │   ├── notebooks/
+│   │   ├── segmentation/
+│   │   │   ├── DNA_simulation_and_segmentation.ipynb
+│   │   │   ├── dna_simulation_helpers.py
+│   │   │   ├── unet_segmentation_helpers.py
+│   │   │   ├── checkpoints/        (MD / non-MD × Res-U-Net / simple U-Net)
+│   │   │   ├── configs/            (TopoStats presets)
+│   │   │   └── README.md
+│   │   ├── common-assets/
+│   │   │   ├── noise/              (blank .spm scan, PSD noise model)
+│   │   │   ├── example-images/
+│   │   │   ├── example-spm/
+│   │   │   └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
+│   │   ├── notebooks/              (previous single-notebook version)
 │   │   │   ├── README.md
 │   │   │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
-│   │   ├── noise-assets/
-│   │   │   ├── psd_noise_model.npz
-│   │   │   └── 20240411_blank_water.0_00000.spm
-│   │   ├── simulated-data/
-│   │   │   ├── img_0000.npy
-│   │   │   └── ...
-│   │   └── test-data/
-│   │       ├── image_5.npy, image_5.png
-│   │       ├── mask_5.npy, mask_5.png
+│   │   └── simulated-data/
+│   │       ├── img_0000.npy
 │   │       └── ...
 │   │
 │   ├── quality-control/

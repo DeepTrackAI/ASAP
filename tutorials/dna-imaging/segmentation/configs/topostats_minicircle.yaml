@@ -1,0 +1,158 @@
+base_dir: ./
+output_dir: ./output
+log_level: info
+cores: 6
+file_ext: .spm
+output_stats: full
+loading:
+  channel: Height
+  extract: raw
+filter:
+  run: true
+  row_alignment_quantile: 0.1
+  threshold_method: absolute
+  otsu_threshold_multiplier: 1.0
+  threshold_std_dev:
+    below: 10.0
+    above: 1.0
+  threshold_absolute:
+    below: -1.0
+    above: 0
+  gaussian_size: 1.5
+  gaussian_mode: nearest
+  remove_scars:
+    run: false
+    removal_iterations: 2
+    threshold_low: 0.25
+    threshold_high: 0.666
+    max_scar_width: 4
+    min_scar_length: 16
+grains:
+  run: true
+  grain_crop_padding: 10
+  threshold_method: absolute
+  otsu_threshold_multiplier: 1.0
+  threshold_std_dev:
+  - 1.0
+  threshold_absolute:
+  - 1.0
+  area_thresholds:
+  - - 300
+    - 3000
+  remove_edge_intersecting_grains: true
+  endpoint_connection_config:
+    run: false
+    class_indices:
+    - 1
+    skeletonisation_holearea_min_max:
+    - 0
+    - null
+    skeletonisation_mask_smoothing_dilation_iterations: 2
+    skeletonisation_mask_smoothing_gaussian_sigma: 2
+    skeletonisation_method: topostats
+    skeletonisation_height_bias: 0.6
+    endpoint_connection_distance_nm: 10.0
+    endpoint_connection_cost_map_height_maximum: 3.0
+    pruning_params:
+      method: topostats
+      max_length: 10.0
+      height_threshold: null
+      method_values: mid
+      method_outlier: mean_abs
+      only_height_prune_endpoints: false
+  unet_config:
+    model_path: checkpoints/md_res_unet.pt  # replaced by the notebook at run time
+    upper_norm_bound: 5.0
+    lower_norm_bound: -1.0
+    remove_disconnected_grains: true
+    confidence: 0.5
+  vetting:
+    whole_grain_size_thresholds: null
+    class_conversion_size_thresholds: null
+    class_region_number_thresholds: null
+    class_size_thresholds: null
+    nearby_conversion_classes_to_convert: null
+    class_touching_threshold: 5
+    keep_largest_labelled_regions_classes: null
+    class_connection_point_thresholds: null
+  classes_to_merge: null
+grainstats:
+  run: true
+  edge_detection_method: binary_erosion
+  class_names:
+  - DNA
+  - Protein
+disordered_tracing:
+  run: true
+  class_index: 1
+  min_skeleton_size: 10
+  extend_endpoints_to_mask_edge: false
+  endpoint_vector_follow_distance_nm: 5.0
+  mask_smoothing_params:
+    gaussian_sigma: null
+    dilation_iterations: 2
+    holearea_min_max:
+    - 5
+    - null
+  skeletonisation_params:
+    method: topostats
+    height_bias: 0.6
+  pruning_params:
+    method: topostats
+    max_length: 10.0
+    height_threshold: null
+    method_values: mid
+    method_outlier: mean_abs
+    only_height_prune_endpoints: false
+nodestats:
+  run: true
+  node_joining_length: 7.0
+  node_extend_dist: 14.0
+  branch_pairing_length: 20.0
+  pair_odd_branches: false
+ordered_tracing:
+  run: true
+  ordering_method: nodestats
+splining:
+  run: true
+  method: rolling_window
+  rolling_window_size: 2.0e-09
+  rolling_window_resampling: true
+  rolling_window_resample_regular_spatial_interval: 5.0e-10
+  spline_step_size: 7.0e-09
+  spline_linear_smoothing: 5.0
+  spline_circular_smoothing: 5.0
+  spline_degree: 3
+curvature:
+  run: true
+  smoothing_method: gaussian
+  smoothing_gaussian_sigma_nm: 1.0
+  smoothing_savgol_window_length_nm: 10.0
+  smoothing_savgol_polyorder: 2
+  curvature_turn_minimum_delay_nm: 20.0
+  curvature_turn_threshold_iqr_multiplier: 1.5
+plotting:
+  run: true
+  style: topostats.mplstyle
+  savefig_format: png
+  savefig_dpi: 100
+  pixel_interpolation: null
+  grain_crop_plot_size_nm: -1
+  image_set:
+  - core
+  zrange:
+  - 0
+  - 3
+  colorbar: true
+  trace_linewidth: 1.0
+  axes: true
+  num_ticks:
+  - null
+  - null
+  cmap: null
+  mask_cmap: blue_purple_green
+  histogram_log_axis: false
+  number_grains: true
+summary_stats:
+  run: false
+  config: null

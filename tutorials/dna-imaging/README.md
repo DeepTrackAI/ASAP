@@ -476,18 +476,28 @@ ASAP/
 └── tutorials/
     └── dna-imaging/
         ├── README.md
-        ├── notebooks/
+        ├── segmentation/                 (current notebook, helper scripts, checkpoints, TopoStats presets)
+        │   ├── DNA_simulation_and_segmentation.ipynb
+        │   ├── dna_simulation_helpers.py
+        │   ├── unet_segmentation_helpers.py
+        │   ├── checkpoints/
+        │   ├── configs/
+        │   └── README.md
+        ├── common-assets/                (shared by all DNA notebooks)
+        │   ├── noise/
+        │   │   ├── psd_noise_model.npz
+        │   │   └── 20240411_blank_water.0_00000.spm
+        │   ├── example-images/
+        │   ├── example-spm/
+        │   └── real-test-data/
+        │       ├── image_5.npy, image_5.png
+        │       ├── mask_5.npy, mask_5.png
+        │       └── ...
+        ├── notebooks/                    (previous single-notebook version)
         │   ├── README.md
         │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
-        ├── noise-assets/
-        │   ├── psd_noise_model.npz
-        │   └── 20240411_blank_water.0_00000.spm
-        ├── simulated-data/
-        │   ├── img_0000.npy
-        │   └── ...
-        └── test-data/
-            ├── image_5.npy, image_5.png
-            ├── mask_5.npy, mask_5.png
+        └── simulated-data/
+            ├── img_0000.npy
             └── ...
 ```
 

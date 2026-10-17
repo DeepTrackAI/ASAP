@@ -1,0 +1,32 @@
+[
+  {
+    "key": "long_relaxed",
+    "label": "Long relaxed plasmid",
+    "file": "20240513_rel_PJIP37_unknot_4ng_eph_ni__.0_00090.spm",
+    "grain": 0,
+    "contour_length_nm": 771.0,
+    "crossings_in_grain": 0,
+    "pixel_nm": 1.136779296875,
+    "reference_from_runs_nm": 771.02
+  },
+  {
+    "key": "minicircle",
+    "label": "Minicircle",
+    "file": "20250722_TAF_rel_ni.0_00039.spm",
+    "grain": 3,
+    "contour_length_nm": 115.1,
+    "crossings_in_grain": 0,
+    "pixel_nm": 0.48828125,
+    "reference_from_runs_nm": 115.15
+  },
+  {
+    "key": "long_supercoiled",
+    "label": "Long supercoiled plasmid",
+    "file": "20240513_SC_PJIP37_unknot_4ng_eph_ni__.0_00010.spm",
+    "grain": 0,
+    "contour_length_nm": 764.5,
+    "crossings_in_grain": 3,
+    "pixel_nm": 0.640869140625,
+    "reference_from_runs_nm": 764.5
+  }
+]
