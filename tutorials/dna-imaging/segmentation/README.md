@@ -14,6 +14,7 @@ AFM data. Real `.spm` scans are analysed with TopoStats using the U-Net.
 | `unet_segmentation_helpers.py` | every function used in Part 2 |
 | `checkpoints/` | trained networks (see below) |
 | `configs/topostats_{relaxed,supercoiled,minicircle}.yaml` | TopoStats settings for each kind of DNA |
+| `requirements.txt` | Python packages (see *Setting up a new machine*) |
 | `../common-assets/noise/` | blank `.spm` scan and PSD noise model used to add realistic noise |
 | `../common-assets/example-images/` | real example molecules shown in the notebook |
 | `../common-assets/example-spm/` | a real relaxed-plasmid scan for the TopoStats demonstration |
@@ -21,6 +22,24 @@ AFM data. Real `.spm` scans are analysed with TopoStats using the U-Net.
 
 Class definitions (dataset, loss, metrics, networks, TopoStats predictor) are in
 the notebook itself.
+
+## Setting up a new machine
+
+The notebook needs this folder **and** `../common-assets/` next to it (it reads
+the noise files, example images, example scan and real test data from there).
+
+```bash
+conda create -n dna-afm python=3.10
+conda activate dna-afm
+# PyTorch with the CUDA build for your GPU, see https://pytorch.org (CPU build also works)
+pip install torch
+pip install -r requirements.txt
+jupyter lab
+```
+
+Then open `DNA_simulation_and_segmentation.ipynb` from this folder. OpenMM picks
+CUDA, OpenCL or CPU automatically; on a machine without a GPU the MD pathway
+still works (slower), and Part 2 runs on the CPU.
 
 ## Running
 
