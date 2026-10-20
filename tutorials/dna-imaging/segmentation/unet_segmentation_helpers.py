@@ -1247,18 +1247,53 @@ def display_df(frame: pd.DataFrame) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _ORIGINAL_PREDICT_UNET = None
+_REAL_KERAS = None
+REQUIRED_TOPOSTATS = (2, 4, 2)
+PYTORCH_SUFFIXES = (".pt", ".pth", ".ckpt")
+
+
+def check_topostats_version() -> str:
+    """Make sure TopoStats 2.4.2 (or a later 2.4.x) is installed.
+
+    Older versions use a different configuration format and internals, so
+    the presets in ``configs/`` and the U-Net connection would fail with
+    confusing errors. Raises a ``RuntimeError`` that says how to install the
+    right version.
+
+    Returns
+    -------
+    str
+        The installed TopoStats version.
+    """
+
+    import importlib.metadata
+    import re
+
+    try:
+        version = importlib.metadata.version("topostats")
+    except importlib.metadata.PackageNotFoundError as exc:
+        raise RuntimeError("TopoStats is not installed. Install it with: "
+                           "pip install topostats==2.4.2") from exc
+    numbers = tuple(int(n) for n in re.findall(r"\d+", version)[:3])
+    if numbers < REQUIRED_TOPOSTATS or numbers[:2] != REQUIRED_TOPOSTATS[:2]:
+        raise RuntimeError(
+            f"Section 15 needs TopoStats 2.4.2 but {version} is installed. Install it with: "
+            "pip install topostats==2.4.2  (then restart the kernel)")
+    return version
 
 
 def install_topostats_unet_patch(predictor_cls: type) -> None:
     """Let TopoStats use a PyTorch U-Net from this notebook (this session only).
 
-    TopoStats' grain detection loads ``grains.unet_config.model_path`` with
-    ``topostats.torch_unet.TorchUNetPredictor`` when the path ends in ``.pt``
-    and then calls ``predict_unet`` on every grain crop. This replaces both,
-    in memory only, so that
+    TopoStats' grain detection loads the network given by
+    ``grains.unet_config.model_path`` (with Keras in the official release)
+    and then calls ``predict_unet`` on every grain crop. This intercepts
+    both, in memory only:
 
-    * ``predictor_cls`` (defined in the notebook) builds the right network
-      (simple U-Net or Res-U-Net) from the checkpoint, and
+    * a model path ending in ``.pt`` / ``.pth`` / ``.ckpt`` is loaded with
+      ``predictor_cls`` (defined in the notebook), which builds the right
+      network (simple U-Net or Res-U-Net) from the checkpoint; other paths
+      still go to Keras;
     * each grain crop is preprocessed exactly as during training and the
       probability map is restored to the crop's pixels before the
       ``confidence`` threshold is applied.
@@ -1268,18 +1303,38 @@ def install_topostats_unet_patch(predictor_cls: type) -> None:
     Parameters
     ----------
     predictor_cls : type
-        Class with ``__init__(model_path)`` and
+        Class with ``__init__(model_path)``, ``input_shape`` and
         ``native_probability(image, lower_norm_bound, upper_norm_bound)``.
     """
 
-    global _ORIGINAL_PREDICT_UNET
+    global _ORIGINAL_PREDICT_UNET, _REAL_KERAS
+    check_topostats_version()
     import topostats
     import topostats.grains as grains
     import topostats.unet_masking as masking
 
+    # Official TopoStats: grains.improve_grain_segmentation_unet calls keras.models.load_model.
+    if _REAL_KERAS is None:
+        _REAL_KERAS = grains.keras
+    real_keras = _REAL_KERAS
+
+    def load_model(path, *args, **kwargs):
+        if str(path).lower().endswith(PYTORCH_SUFFIXES):
+            return predictor_cls(path)
+        return real_keras.models.load_model(path, *args, **kwargs)
+
+    keras_models = types.ModuleType("keras.models")
+    keras_models.__getattr__ = lambda name: getattr(real_keras.models, name)
+    keras_models.load_model = load_model
+    keras_proxy = types.ModuleType("keras")
+    keras_proxy.__getattr__ = lambda name: getattr(real_keras, name)
+    keras_proxy.models = keras_models
+    grains.keras = keras_proxy
+
+    # Builds whose grains.py imports a PyTorch adapter module instead.
     try:
         import topostats.torch_unet as adapter
-    except ImportError:  # older TopoStats without the PyTorch adapter module
+    except ImportError:
         adapter = types.ModuleType("topostats.torch_unet")
         sys.modules["topostats.torch_unet"] = adapter
         topostats.torch_unet = adapter
@@ -1436,6 +1491,7 @@ def prepare_topostats_config(
     from topostats.config import update_plotting_config
     from topostats.validation import DEFAULT_CONFIG_SCHEMA, validate_config
 
+    check_topostats_version()
     quiet_topostats()
     config = dict(config)
     config["base_dir"] = Path(spm_path).resolve().parent
