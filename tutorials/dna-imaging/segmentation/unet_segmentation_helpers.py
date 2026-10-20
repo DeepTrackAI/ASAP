@@ -1248,6 +1248,7 @@ def display_df(frame: pd.DataFrame) -> None:
 
 _ORIGINAL_PREDICT_UNET = None
 _REAL_KERAS = None
+_PATCH_INSTALLED = False
 REQUIRED_TOPOSTATS = (2, 4, 2)
 PYTORCH_SUFFIXES = (".pt", ".pth", ".ckpt")
 
@@ -1307,7 +1308,7 @@ def install_topostats_unet_patch(predictor_cls: type) -> None:
         ``native_probability(image, lower_norm_bound, upper_norm_bound)``.
     """
 
-    global _ORIGINAL_PREDICT_UNET, _REAL_KERAS
+    global _ORIGINAL_PREDICT_UNET, _REAL_KERAS, _PATCH_INSTALLED
     check_topostats_version()
     import topostats
     import topostats.grains as grains
@@ -1354,6 +1355,7 @@ def install_topostats_unet_patch(predictor_cls: type) -> None:
 
     grains.predict_unet = predict_unet
     masking.predict_unet = predict_unet
+    _PATCH_INSTALLED = True
 
 
 def quiet_topostats() -> None:
@@ -1540,6 +1542,11 @@ def run_topostats(spm_path: str | Path, config: dict[str, Any], quiet: bool = Tr
     from topostats.io import LoadScans
     from topostats.processing import process_scan
 
+    model_path = config["grains"]["unet_config"].get("model_path")
+    if model_path and str(model_path).lower().endswith(PYTORCH_SUFFIXES) and not _PATCH_INSTALLED:
+        raise RuntimeError("TopoStats cannot load a PyTorch checkpoint by itself. Run "
+                           "seg.install_topostats_unet_patch(TorchUNetPredictor) first "
+                           "(the section 15 cell does this).")
     if quiet:
         quiet_topostats()
 
@@ -1561,17 +1568,27 @@ def run_topostats(spm_path: str | Path, config: dict[str, Any], quiet: bool = Tr
         plotting_config=config["plotting"],
         output_dir=config["output_dir"],
     )
+    if not getattr(topo, "grain_crops", None):
+        print(f"TopoStats found no molecules in {Path(spm_path).name}. If an error is shown above, "
+              "fix that first; otherwise try a lower grain_threshold_nm or smaller "
+              "grain_area_thresholds_nm2, or another preset.")
     return dict(filename=filename, topostats=topo, molecules=molecule_df, grains=grain_df,
                 image_stats=image_df, disordered=disordered_df, branches=branch_df,
                 pixel_nm=float(topo.pixel_to_nm_scaling))
 
 
+MOLECULE_COLUMNS = ["grain", "molecule", "contour_length_nm", "circular", "crossings_in_grain"]
+
+
 def molecule_table(result: dict[str, Any]) -> pd.DataFrame:
-    """Per-molecule contour lengths (nm), circularity and grain crossing counts."""
+    """Per-molecule contour lengths (nm), circularity and grain crossing counts.
+
+    Returns an empty table (with the same columns) when no molecule was traced.
+    """
 
     topo = result["topostats"]
     rows = []
-    for grain_number, crop in topo.grain_crops.items():
+    for grain_number, crop in (getattr(topo, "grain_crops", None) or {}).items():
         trace = getattr(crop, "_ordered_trace", None) or getattr(crop, "ordered_trace", None)
         molecules = getattr(trace, "molecule_data", None) or {}
         nodes = getattr(crop, "_nodes", None) or getattr(crop, "nodes", None) or {}
@@ -1581,7 +1598,7 @@ def molecule_table(result: dict[str, Any]) -> pd.DataFrame:
                              contour_length_nm=None if length is None else float(length) * 1e9,
                              circular=getattr(molecule, "circular", None),
                              crossings_in_grain=len(nodes)))
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=MOLECULE_COLUMNS)
 
 
 def show_topostats_results(result: dict[str, Any], title: str = "") -> pd.DataFrame:
@@ -1621,7 +1638,7 @@ def _draw_topostats_results(result, topo, pixel_nm, image, extent, mask, title) 
     axes[2].imshow(image, cmap="gray", vmin=-1, vmax=4, extent=extent)
     colours = plt.cm.tab10.colors
     table = molecule_table(result)
-    for k, (grain_number, crop) in enumerate(topo.grain_crops.items()):
+    for k, (grain_number, crop) in enumerate((getattr(topo, "grain_crops", None) or {}).items()):
         trace = getattr(crop, "_ordered_trace", None) or getattr(crop, "ordered_trace", None)
         molecules = getattr(trace, "molecule_data", None) or {}
         bbox = getattr(crop, "_bbox", None) or getattr(crop, "bbox", None)
