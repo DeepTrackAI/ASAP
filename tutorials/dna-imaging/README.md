@@ -306,12 +306,11 @@ tutorials/dna-imaging/
 │   ├── configs/                         # TopoStats presets
 │   ├── requirements.txt
 │   └── README.md                        # set-up and checkpoint details
-├── common-assets/                       # shared by the DNA tutorials
-│   ├── noise/                           # blank .spm scan and PSD noise model
-│   ├── example-images/                  # real molecules shown in section 5
-│   ├── example-spm/                     # real relaxed-plasmid scan for TopoStats
-│   └── real-test-data/                  # image_N / mask_N (.npy in nm, and .png)
-└── simulated-data/                      # a few example simulated height maps
+└── common-assets/                       # shared by the DNA tutorials
+    ├── noise/                           # blank .spm scan and PSD noise model
+    ├── example-images/                  # real molecules shown in section 5
+    ├── example-spm/                     # real relaxed-plasmid scan for TopoStats
+    └── real-test-data/                  # image_N / mask_N (.npy in nm, and .png)
 ```
 
 ## Dependencies

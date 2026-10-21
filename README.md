@@ -145,14 +145,11 @@ ASAP/
 │   │   │   ├── checkpoints/        (MD / non-MD × Res-U-Net / simple U-Net)
 │   │   │   ├── configs/            (TopoStats presets)
 │   │   │   └── README.md
-│   │   ├── common-assets/
-│   │   │   ├── noise/              (blank .spm scan, PSD noise model)
-│   │   │   ├── example-images/
-│   │   │   ├── example-spm/
-│   │   │   └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
-│   │   └── simulated-data/
-│   │       ├── img_0000.npy
-│   │       └── ...
+│   │   └── common-assets/
+│   │       ├── noise/              (blank .spm scan, PSD noise model)
+│   │       ├── example-images/
+│   │       ├── example-spm/
+│   │       └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
 │   │
 │   ├── quality-control/
 │   │   ├── 3t3_cell_dataset/
