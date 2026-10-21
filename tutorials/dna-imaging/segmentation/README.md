@@ -41,6 +41,20 @@ Then open `DNA_simulation_and_segmentation.ipynb` from this folder. OpenMM picks
 CUDA, OpenCL or CPU automatically; on a machine without a GPU the MD pathway
 still works (slower), and Part 2 runs on the CPU.
 
+## Running on Colab or Kaggle
+
+Use the *Open in Colab* badge at the top of the notebook, or upload the
+notebook to Kaggle. Also download the helper scripts
+`dna_simulation_helpers.py` and `unet_segmentation_helpers.py` and put them
+next to the notebook, or run the set-up cell in section 0: on Colab and Kaggle
+it installs Deeplay, DeepTrack and OpenMM and downloads the helper scripts,
+`checkpoints/` and `configs/` from this repository (on Kaggle, switch on
+*Internet* first).
+
+`../common-assets/` is not available there, so the simulated images get no
+AFM noise and the real-data examples need your own files; everything else
+runs.
+
 ## Running
 
 Run the notebook from this folder (paths are relative to it).

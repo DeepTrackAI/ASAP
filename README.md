@@ -93,10 +93,6 @@ Main notebook:
   (helper scripts, trained checkpoints and TopoStats presets in the same folder; see its
   [README](tutorials/dna-imaging/segmentation/README.md))
 
-Previous single-notebook version:
-
-* [Simulation of DNA chains and Res-U-Net](tutorials/dna-imaging/notebooks/Simulation_of_DNA_chains_and_Res_U_Net.ipynb)
-
 ## AFM data quality control
 
 The AFM data quality-control tutorial trains a conditional variational
@@ -154,9 +150,6 @@ ASAP/
 │   │   │   ├── example-images/
 │   │   │   ├── example-spm/
 │   │   │   └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
-│   │   ├── notebooks/              (previous single-notebook version)
-│   │   │   ├── README.md
-│   │   │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
 │   │   └── simulated-data/
 │   │       ├── img_0000.npy
 │   │       └── ...

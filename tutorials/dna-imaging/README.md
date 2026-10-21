@@ -493,9 +493,6 @@ ASAP/
         │       ├── image_5.npy, image_5.png
         │       ├── mask_5.npy, mask_5.png
         │       └── ...
-        ├── notebooks/                    (previous single-notebook version)
-        │   ├── README.md
-        │   └── Simulation_of_DNA_chains_and_Res_U_Net.ipynb
         └── simulated-data/
             ├── img_0000.npy
             └── ...
