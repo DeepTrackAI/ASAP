@@ -1,10 +1,13 @@
 # Requirements for DNA_simulation_and_segmentation.ipynb (Python 3.10-3.12).
+# Raw .spm analysis: also run python setup_topostats.py to build/install the
+# pinned ASAP contour profile. Official TopoStats 2.4.2 excludes Python 3.12.
 # Install PyTorch first with the build that matches your GPU/CUDA (https://pytorch.org),
 # then: pip install -r requirements.txt
 #
 # Tested with: Python 3.10, numpy 2.0.2, scipy 1.15, matplotlib 3.10, scikit-image 0.25,
 # pandas 2.3, torch 2.11 (CUDA 12.8), lightning 2.6.1, torchmetrics 1.9, deeplay 0.1.4,
 # deeptrack 2.0.1, openmm 8.5, topostats 2.4.2.
+# Python 3.12.13 contour-profile validation: see TOPOSTATS_PYTHON312.md.
 
 numpy>=1.26,<2.3
 scipy>=1.11
@@ -28,6 +31,5 @@ deeptrack==2.0.1
 # plain openmm runs on CPU and OpenCL.
 openmm>=8.1
 
-# .spm analysis in section 15. The notebook connects its U-Net to TopoStats'
-# internals, so keep this exact version.
-topostats==2.4.2
+# .spm analysis in section 15: python setup_topostats.py
+# This installs topostats==2.4.2+asap312.1 and its compatible dependencies.

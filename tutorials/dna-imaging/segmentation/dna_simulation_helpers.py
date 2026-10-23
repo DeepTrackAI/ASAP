@@ -2,8 +2,8 @@
 
 Part 1 of the notebook simulates closed DNA molecules on a substrate and
 renders them as AFM height maps with matching DNA and crossing masks.
-This module holds every function used by Part 1; the classes are defined
-in the notebook.
+This module holds every function used by Part 1 and the benchmark memory
+tracker class. The learning-model classes are defined in the notebook.
 
 The notebook defines its variables in ordinary cells and hands them to
 this module with ``configure(globals())``. Only the names listed in
@@ -233,6 +233,7 @@ import os
 import platform
 import re
 import statistics
+import threading
 import subprocess
 import sys
 import time
@@ -243,6 +244,7 @@ from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+import psutil
 from IPython.display import HTML, display
 from matplotlib import animation
 from scipy.ndimage import (
@@ -6087,6 +6089,132 @@ def plot_sanity_samples(samples: list[dict[str, Any]]) -> None:
 # ────────────────────────────────────────────────────────────────────────────
 
 
+class PeakMemTracker:
+    """Track the peak resident memory of this process in a thread.
+
+    Between `start()` and `stop()`, a background thread reads the resident
+    set size of the process every `poll_interval_s` seconds and keeps the
+    largest value. The benchmark in section 7 uses it to report the peak
+    memory of the pipeline.
+
+    Parameters
+    ----------
+    poll_interval_s: float, optional
+        Time between two readings in seconds. Defaults to 0.05.
+
+    Attributes
+    ----------
+    peak_mb: float
+        Largest resident set size seen while tracking, in MB.
+
+    Methods
+    -------
+    `start() -> None`
+        Start reading the memory in a background thread.
+    `stop() -> None`
+        Stop reading and wait for the thread to finish.
+
+    Examples
+    --------
+    >>> import time
+
+    >>> tracker = PeakMemTracker()
+    >>> tracker.start()
+    >>> time.sleep(0.2)
+    >>> tracker.stop()
+    >>> tracker.peak_mb > 0
+    True
+
+    """
+
+    peak_mb: float
+    _process: psutil.Process
+    _poll_interval_s: float
+    _stop_event: threading.Event
+    _thread: threading.Thread | None
+
+    def __init__(
+        self: PeakMemTracker,
+        poll_interval_s: float = 0.05,
+    ) -> None:
+        """Initialize the tracker without starting it.
+
+        Parameters
+        ----------
+        poll_interval_s: float, optional
+            Time between two readings in seconds. Defaults to 0.05.
+
+        """
+
+        self._process = psutil.Process(os.getpid())
+        self._poll_interval_s = float(poll_interval_s)
+        self._stop_event = threading.Event()
+        self._thread = None
+        self.peak_mb = 0.0
+
+    def _run(self: PeakMemTracker) -> None:
+        """Read the memory until the stop event is set.
+
+        Returns
+        -------
+        None
+            `peak_mb` is updated in place.
+
+        """
+
+        while not self._stop_event.is_set():
+            try:
+                rss_mb = self._process.memory_info().rss / 1e6
+                self.peak_mb = max(self.peak_mb, rss_mb)
+            except Exception:
+                # The process information can be briefly unavailable.
+                pass
+            self._stop_event.wait(self._poll_interval_s)
+
+    def start(self: PeakMemTracker) -> None:
+        """Start reading the memory in a background thread.
+
+        Returns
+        -------
+        None
+            The thread runs until `stop()` is called.
+
+        Examples
+        --------
+        >>> tracker = PeakMemTracker()
+        >>> tracker.start()
+        >>> tracker.stop()
+
+        """
+
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self: PeakMemTracker) -> None:
+        """Stop reading the memory and wait for the thread to finish.
+
+        Returns
+        -------
+        None
+            `peak_mb` holds the peak seen since `start()`.
+
+        Examples
+        --------
+        >>> tracker = PeakMemTracker()
+        >>> tracker.start()
+        >>> tracker.stop()
+        >>> isinstance(tracker.peak_mb, float)
+        True
+
+        """
+
+        self._stop_event.set()
+        if self._thread is not None:
+            self._thread.join()
+
+
+
 def bench_stages(
     seed: int,
     contour_length_nm: float,
@@ -6182,7 +6310,7 @@ def benchmark_pipeline(
 
     Prints a system profile, generates ``n_reps`` timed samples (seeds
     ``seed`` to ``seed + n_reps - 1``), records the peak memory with
-    ``tracker_cls`` (the ``_PeakMemTracker`` class of the notebook) and
+    ``tracker_cls`` (normally this module's ``PeakMemTracker`` class) and
     projects the total time for ``total_samples`` samples.
 
     Parameters

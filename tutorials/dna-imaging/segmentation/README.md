@@ -10,8 +10,10 @@ AFM data. Real `.spm` scans are analysed with TopoStats using the U-Net.
 | Path | What it is |
 |---|---|
 | `DNA_simulation_and_segmentation.ipynb` | the notebook (Part 1: dataset generation, Part 2: segmentation) |
-| `dna_simulation_helpers.py` | every function used in Part 1 |
+| `dna_simulation_helpers.py` | every function used in Part 1 and the benchmark memory tracker |
 | `unet_segmentation_helpers.py` | every function used in Part 2 |
+| `setup_topostats.py` | builds the verified TopoStats contour profile for Python 3.10-3.12 |
+| `TOPOSTATS_PYTHON312.md` | dependency audit, exact compatibility changes and validation |
 | `checkpoints/` | trained networks (see below) |
 | `configs/topostats_{relaxed,supercoiled,minicircle}.yaml` | TopoStats settings for each kind of DNA |
 | `requirements.txt` | Python packages (see *Setting up a new machine*) |
@@ -29,11 +31,12 @@ The notebook needs this folder **and** `../common-assets/` next to it (it reads
 the noise files, example images, example scan and real test data from there).
 
 ```bash
-conda create -n dna-afm python=3.10
+conda create -n dna-afm python=3.12.13
 conda activate dna-afm
 # PyTorch with the CUDA build for your GPU, see https://pytorch.org (CPU build also works)
 pip install torch
 pip install -r requirements.txt
+python setup_topostats.py
 jupyter lab
 ```
 
@@ -43,17 +46,31 @@ still works (slower), and Part 2 runs on the CPU.
 
 ## Running on Colab or Kaggle
 
-Use the *Open in Colab* badge at the top of the notebook, or upload the
-notebook to Kaggle. Also download the helper scripts
-`dna_simulation_helpers.py` and `unet_segmentation_helpers.py` and put them
-next to the notebook, or run the set-up cell in section 0: on Colab and Kaggle
-it installs Deeplay, DeepTrack and OpenMM and downloads the helper scripts,
-`checkpoints/` and `configs/` from this repository (on Kaggle, switch on
-*Internet* first).
+Use the *Open in Colab* badge and run section 0 in a fresh Python 3.12.13
+runtime. It downloads the helpers, setup script, four checkpoints, three
+fine-tuned presets, shared noise assets and example `.spm` scan. On Kaggle,
+enable Internet first. Set `INSTALL_TOPOSTATS = False` if raw `.spm` analysis
+is not needed. The full real test dataset is not downloaded automatically.
 
-`../common-assets/` is not available there, so the simulated images get no
-AFM noise and the real-data examples need your own files; everything else
-runs.
+The setup builds `topostats==2.4.2+asap312.1` from the small, checksum-verified
+official PyPI wheel. This **ASAP contour profile** supports Python 3.12 for
+the notebook's scan-processing workflow; it deliberately omits the unused
+Jones-polynomial knot/link classifier and its `topoly` dependency. Filtering,
+grain detection, U-Net segmentation, crossing resolution, ordered traces,
+splines, contour lengths and circularity use the upstream code. This is a
+modified build, not an official TopoStats Python 3.12 release. See
+[the compatibility audit](TOPOSTATS_PYTHON312.md).
+
+There is no full Git clone, blanket warning suppression or
+`--ignore-requires-python`. If installation changes numerical libraries that
+were already imported, restart the session once and rerun setup.
+
+Section 15 defaults to `TOPOSTATS_CONFIG_SOURCE = "preset"`: the experiment's
+fine-tuned relaxed/supercoiled/minicircle settings, with editable common
+overrides. Set it to `"custom"` to use a complete TopoStats 2.4.2 YAML instead;
+enter its path in `TOPOSTATS_CUSTOM_YAML` or at the prompt. The custom nested
+scientific settings are retained and validated. The notebook controls input
+and output paths, the selected checkpoint, one worker and plot saving.
 
 ## Running
 

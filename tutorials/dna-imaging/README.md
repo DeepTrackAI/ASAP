@@ -55,19 +55,18 @@ notebook.
 
 **On your own machine.** Set up the environment as described in
 [`segmentation/README.md`](segmentation/README.md) (`pip install -r
-requirements.txt` after PyTorch), then open the notebook from the
+requirements.txt` after PyTorch, then `python setup_topostats.py`), then open the notebook from the
 `segmentation/` folder; all paths are relative to it, and `../common-assets/`
 must be next to it.
 
 **On Colab or Kaggle.** Open the notebook with the badge above (or upload it
 to Kaggle) and run **section 0** first. On Colab and Kaggle it installs
-Deeplay, DeepTrack and OpenMM and downloads the helper scripts,
-`checkpoints/` and `configs/` from this repository (on Kaggle, switch on
-*Internet* in the notebook settings). You can also download
-`dna_simulation_helpers.py` and `unet_segmentation_helpers.py` yourself and
-put them next to the notebook. `common-assets/` is not downloaded, so the
-simulated images get no AFM noise and the real-data examples need your own
-files; everything else runs.
+Deeplay, DeepTrack, OpenMM and the pinned TopoStats contour profile for
+Python 3.12.13. It downloads the helper scripts, setup script, checkpoints,
+fine-tuned presets, small noise assets and example scan from this repository
+(on Kaggle, switch on *Internet*). The full real test dataset is not
+downloaded automatically. See the
+[Python 3.12 audit](segmentation/TOPOSTATS_PYTHON312.md) for the profile's scope.
 
 **Which cells to run.**
 
@@ -272,8 +271,12 @@ crossings in each grain. Three presets in `segmentation/configs/` are tuned
 for `relaxed` plasmids, `supercoiled` plasmids and `minicircle`s; the
 notebook shows their most important settings so they can be changed. The
 U-Net is connected to TopoStats for the current session only; nothing in the
-installed TopoStats is changed. This needs **TopoStats 2.4.2**
-(`pip install topostats==2.4.2`).
+installed TopoStats is changed by that U-Net connection. On Python 3.12,
+section 0 installs **TopoStats 2.4.2+asap312.1**, a verified local build that
+omits unused Jones-polynomial knot/link classification and retains contour
+processing. Section 15 uses the fine-tuned presets by default; choose
+`TOPOSTATS_CONFIG_SOURCE = "custom"` and enter a YAML path to use your own
+full TopoStats configuration instead.
 
 ## Files created by the notebook
 

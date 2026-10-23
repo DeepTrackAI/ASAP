@@ -151,10 +151,11 @@ Functions:
 
     Real-data evaluation and display.
 
-- `check_topostats_version()`, `install_topostats_unet_patch(cls)`,
+- `prepare_colab_import_hooks()`, `check_topostats_version()`, `topostats_runtime_info()`,
+  `install_topostats_unet_patch(cls)`,
   `quiet_topostats()`, `load_topostats_config(yaml_path)`,
   `update_nested(config, overrides)`,
-  `exposed_topostats_settings(yaml_path)`,
+  `select_topostats_yaml(source, preset, custom_yaml)`, `exposed_topostats_settings(yaml_path)`,
   `build_topostats_config(yaml_path, settings, ...)`,
   `prepare_topostats_config(config, spm_path, ...)`,
   `run_topostats(spm_path, config, quiet)`, `molecule_table(result)`,
@@ -199,12 +200,15 @@ Prepare a height map for the network and map the output back:
 
 from __future__ import annotations
 
+import json
 import logging
 import random
 import sys
 import types
 from collections.abc import Callable
+from copy import deepcopy
 from importlib import resources
+from importlib.util import spec_from_loader
 from pathlib import Path
 from typing import Any, Literal
 
@@ -2701,8 +2705,46 @@ REQUIRED_TOPOSTATS = (2, 4, 2)
 PYTORCH_SUFFIXES = (".pt", ".pth", ".ckpt")
 
 
+def _colab_legacy_find_spec(
+    finder: Any, fullname: str, path: Any = None, target: Any = None
+) -> Any:
+    """Use a legacy Colab finder's loader through Python's spec API."""
+    loader = finder.find_module(fullname, path)
+    return None if loader is None else spec_from_loader(fullname, loader)
+
+
+def prepare_colab_import_hooks() -> int:
+    """Add ``find_spec`` to legacy Colab PyDrive import hooks if needed.
+
+    Python 3.10/3.11 otherwise emit an ImportWarning before calling the
+    hook's ``find_module``. TopoStats' Feret module promotes warnings to
+    errors, which can stop imports of ``topostats.processing`` in Colab.
+    This adapter preserves the hook's loader and Drive authentication;
+    it neither removes hooks nor changes warning filters. Modern Colab
+    hooks and local Python environments are left as they are.
+
+    Returns
+    -------
+    int
+        Number of legacy hooks adapted. Calling this again returns zero
+        unless Colab has registered another legacy hook.
+    """
+    adapted = 0
+    for finder in tuple(sys.meta_path):
+        finder_type = type(finder)
+        if (
+            finder_type.__name__ in ("_PyDriveImportHook", "_PyDrive2ImportHook")
+            and finder_type.__module__.startswith("google.colab.")
+            and not callable(getattr(finder, "find_spec", None))
+            and callable(getattr(finder, "find_module", None))
+        ):
+            finder.find_spec = types.MethodType(_colab_legacy_find_spec, finder)
+            adapted += 1
+    return adapted
+
+
 def check_topostats_version() -> str:
-    """Make sure TopoStats 2.4.2 (or a later 2.4.x) is installed.
+    """Check the 2.4 API and require the contour profile on Python 3.12.
 
     Older versions use a different configuration format and internals, so
     the presets in ``configs/`` and the U-Net connection would fail with
@@ -2716,8 +2758,8 @@ def check_topostats_version() -> str:
     Raises
     ------
     RuntimeError
-        If TopoStats is missing or has another version; the message says
-        how to install 2.4.2.
+        If the TopoStats API or Python compatibility profile is missing;
+        the message points to the section 0 setup script.
 
     Examples
     --------
@@ -2728,6 +2770,8 @@ def check_topostats_version() -> str:
 
     """
 
+    prepare_colab_import_hooks()
+
     import importlib.metadata
     import re
 
@@ -2735,17 +2779,40 @@ def check_topostats_version() -> str:
         version = importlib.metadata.version("topostats")
     except importlib.metadata.PackageNotFoundError as exc:
         raise RuntimeError(
-            "TopoStats is not installed. Install it with: "
-            "pip install topostats==2.4.2"
+            "TopoStats is not installed. Run: python setup_topostats.py "
+            "(or run the notebook's section 0 setup)."
         ) from exc
     numbers = tuple(int(n) for n in re.findall(r"\d+", version)[:3])
     if numbers < REQUIRED_TOPOSTATS or numbers[:2] != REQUIRED_TOPOSTATS[:2]:
         raise RuntimeError(
-            f"Section 15 needs TopoStats 2.4.2 but {version} is "
-            "installed. Install it with: pip install topostats==2.4.2  "
-            "(then restart the kernel)"
+            f"Section 15 needs the TopoStats 2.4 API but {version} is "
+            "installed. Run: python setup_topostats.py, then restart "
+            "the session if TopoStats was already imported."
         )
+    if sys.version_info[:2] >= (3, 12):
+        info = topostats_runtime_info()
+        if info["profile"] != "asap-contour":
+            raise RuntimeError(
+                "Official TopoStats 2.4.2 does not support Python 3.12. "
+                "Run python setup_topostats.py to install the verified "
+                "ASAP contour profile; do not bypass Requires-Python."
+            )
     return version
+
+
+def topostats_runtime_info() -> dict[str, Any]:
+    """Report the installed build and whether Jones classification exists."""
+    from importlib.metadata import distribution
+
+    dist = distribution("topostats")
+    receipt = Path(dist.locate_file("topostats/asap_profile.json"))
+    info = {"version": dist.version, "python": sys.version.split()[0],
+            "profile": "official", "knot_classification": True}
+    if receipt.is_file():
+        profile = json.loads(receipt.read_text(encoding="utf-8"))
+        profile["requires_python"] = profile.pop("python")
+        info.update(profile)
+    return info
 
 
 def install_topostats_unet_patch(predictor_cls: type) -> None:
@@ -2909,7 +2976,34 @@ def load_topostats_config(yaml_path: str | Path) -> dict[str, Any]:
     """
 
     with open(yaml_path, encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+        config = yaml.safe_load(handle)
+    if not isinstance(config, dict):
+        raise ValueError(f"Expected a TopoStats YAML mapping in {yaml_path}.")
+    return config
+
+
+def select_topostats_yaml(
+    source: str = "preset", preset: str = "relaxed", custom_yaml: str | Path = ""
+) -> Path:
+    """Choose an experiment preset (default) or a user-supplied full YAML.
+
+    A custom YAML is the base configuration, not a flat list of exposed
+    settings. Runtime input/output paths, checkpoint, one core and plot
+    saving are still controlled by the notebook.
+    """
+    if source == "preset":
+        if preset not in ("relaxed", "supercoiled", "minicircle"):
+            raise ValueError("Preset must be relaxed, supercoiled or minicircle.")
+        path = Path("configs") / f"topostats_{preset}.yaml"
+    elif source == "custom":
+        if not str(custom_yaml).strip():
+            raise ValueError("Set TOPOSTATS_CUSTOM_YAML to the path of your TopoStats YAML.")
+        path = Path(custom_yaml).expanduser()
+    else:
+        raise ValueError("TOPOSTATS_CONFIG_SOURCE must be 'preset' or 'custom'.")
+    if not path.is_file():
+        raise FileNotFoundError(f"TopoStats YAML was not found: {path.resolve()}")
+    return path
 
 
 def update_nested(
@@ -3019,12 +3113,12 @@ def build_topostats_config(
     model_path: str | Path | None,
     output_dir: str | Path,
 ) -> dict[str, Any]:
-    """Load a preset, apply the notebook's settings and complete it.
+    """Load a preset or full custom YAML, apply explicit overrides and validate.
 
     Parameters
     ----------
     yaml_path: str | Path
-        The preset (``configs/topostats_*.yaml``).
+        A preset or a full custom TopoStats 2.4.2 YAML.
     settings: dict[str, Any]
         Notebook name to value (see ``TOPOSTATS_EXPOSED_SETTINGS``).
     spm_path: str | Path
@@ -3119,12 +3213,13 @@ def prepare_topostats_config(
 
     """
 
+    check_topostats_version()
+
     from topostats.config import update_plotting_config
     from topostats.validation import DEFAULT_CONFIG_SCHEMA, validate_config
 
-    check_topostats_version()
     quiet_topostats()
-    config = dict(config)
+    config = deepcopy(config)
     config["base_dir"] = Path(spm_path).resolve().parent
     config["output_dir"] = Path(output_dir).resolve()
     config["file_ext"] = Path(spm_path).suffix.lower()
@@ -3195,6 +3290,8 @@ def run_topostats(
 
     """
 
+    prepare_colab_import_hooks()
+
     from topostats.io import LoadScans
     from topostats.processing import process_scan
 
@@ -3247,6 +3344,7 @@ def run_topostats(
             "grain_area_thresholds_nm2, or another preset."
         )
     return dict(
+        runtime_profile=topostats_runtime_info(),
         filename=filename,
         topostats=topo,
         molecules=molecule_df,
@@ -3357,6 +3455,9 @@ def show_topostats_results(
 
     topo = result["topostats"]
     pixel_nm = result["pixel_nm"]
+    if result.get("runtime_profile", {}).get("knot_classification") is False:
+        print("ASAP contour profile: Jones-polynomial knot/link classification is omitted. "
+              "Contour length, circularity and crossing counts are computed normally.")
     image = np.asarray(topo.image)
     ny, nx = image.shape
     extent = (0, nx * pixel_nm, ny * pixel_nm, 0)
