@@ -211,7 +211,7 @@ Contributions are welcome. Useful contributions include:
 * Improving dataset-loading and export utilities.
 * Adding tests or small validation datasets where appropriate.
 
-# CITATIONS
+# Cite us!
 
 [Prakhar Dutta](https://www.spiedigitallibrary.org/profile/notfound?author=Prakhar_Dutta), [Jiacheng Huang](https://www.spiedigitallibrary.org/profile/notfound?author=Jiacheng_Huang), [Nazli Demirpehlivan](https://www.spiedigitallibrary.org/profile/notfound?author=Nazli_Demirpehlivan), et al. "ASAP (AFM simulation and analysis pipeline): a unified deep learning framework for simulation, quality control, and segmentation in atomic force microscopy", Proc. SPIE 14198, Emerging Topics in Artificial Intelligence (ETAI) 2026, 1419804 (9 Oct 2026); [https://doi.org/10.1117/12.3113626](https://doi.org/10.1117/12.3113626)
 
