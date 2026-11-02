@@ -1,0 +1,8 @@
+# Written by DNA_simulation_and_segmentation.ipynb
+dna_dataset*/
+logs_unet/
+lightning_logs/
+topostats_output/
+checkpoints/my_*.pt
+# TopoStats writes a timestamped log file into the working folder on every run
+*.log

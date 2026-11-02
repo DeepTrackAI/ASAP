@@ -89,7 +89,9 @@ The workflow includes:
 
 Main notebook:
 
-* [**Simulation of DNA chain with U-Net**](tutorials/Simulation%20of%20DNA%20chains/Notebooks/Simulation_of_DNA_chain_with_U_Net.ipynb)
+* [**Simulation and segmentation of DNA imaged by AFM**](tutorials/dna-imaging/segmentation/DNA_simulation_and_segmentation.ipynb)
+  (helper scripts, trained checkpoints and TopoStats presets in the same folder; see its
+  [README](tutorials/dna-imaging/segmentation/README.md))
 
 ## AFM data quality control
 
@@ -125,7 +127,7 @@ The workflow includes:
 
 Main notebook:
 
-* [**AFM Simulation and Regression Model**](tutorials/simu-inference/Part1_AFM_simulation_final.ipynb)
+* [**AFM Simulation and Regression Model**](tutorials/simu-inference/Part_1_AFM_simulation_final.ipynb)
 
 # Repository Structure
 
@@ -134,35 +136,20 @@ The tutorial directories are organized as follows:
 ```text
 ASAP/
 ├── tutorials/
-│   ├── Simulation of DNA chains/
-│   │   ├── Notebooks/
-│   │   │   └── Simulation_of_DNA_chain_with_U_Net.ipynb
-│   │   ├── Noise assets/
-│   │   │   ├── psd_noise_model.npz
-│   │   │   └── 20240411_blank_water.0_00000.spm
-│   │   ├── Simulated data/
-│   │   │   └── dna_dataset_100_4lengths_MD/
-│   │   │       ├── images/
-│   │   │       │   ├── img_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── dna_masks/
-│   │   │       │   ├── dna_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── cross_masks/
-│   │   │       │   ├── cross_0000.npy
-│   │   │       │   └── ...
-│   │   │       ├── meta/
-│   │   │       │   ├── meta_0000.npz
-│   │   │       │   └── ...
-│   │   │       └── manifest.csv
-│   │   ├── Test data/
-│   │   │   ├── images/
-│   │   │   │   ├── img_00.npy
-│   │   │   │   └── ...
-│   │   │   └── masks/
-│   │   │       ├── mask_00.npy
-│   │   │       └── ...
-│   │   └── DNA_simulation_with_UNet_README.md
+│   ├── dna-imaging/
+│   │   ├── README.md
+│   │   ├── segmentation/
+│   │   │   ├── DNA_simulation_and_segmentation.ipynb
+│   │   │   ├── dna_simulation_helpers.py
+│   │   │   ├── unet_segmentation_helpers.py
+│   │   │   ├── checkpoints/        (MD / non-MD × Res-U-Net / simple U-Net)
+│   │   │   ├── configs/            (TopoStats presets)
+│   │   │   └── README.md
+│   │   └── common-assets/
+│   │       ├── noise/              (blank .spm scan, PSD noise model)
+│   │       ├── example-images/
+│   │       ├── example-spm/
+│   │       └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
 │   │
 │   ├── quality-control/
 │   │   ├── 3t3_cell_dataset/
@@ -223,6 +210,10 @@ Contributions are welcome. Useful contributions include:
 * Adding new AFM simulation or analysis notebooks.
 * Improving dataset-loading and export utilities.
 * Adding tests or small validation datasets where appropriate.
+
+# Cite us!
+
+[Prakhar Dutta](https://www.spiedigitallibrary.org/profile/notfound?author=Prakhar_Dutta), [Jiacheng Huang](https://www.spiedigitallibrary.org/profile/notfound?author=Jiacheng_Huang), [Nazli Demirpehlivan](https://www.spiedigitallibrary.org/profile/notfound?author=Nazli_Demirpehlivan), et al. "ASAP (AFM simulation and analysis pipeline): a unified deep learning framework for simulation, quality control, and segmentation in atomic force microscopy", Proc. SPIE 14198, Emerging Topics in Artificial Intelligence (ETAI) 2026, 1419804 (9 Oct 2026); [https://doi.org/10.1117/12.3113626](https://doi.org/10.1117/12.3113626)
 
 # License
 
