@@ -3,4 +3,5 @@ lightning_logs/
 .ipynb_checkpoints/
 __pycache__/
 3t3_cell_dataset/
+gel_dataset/
 .topostats-build/
